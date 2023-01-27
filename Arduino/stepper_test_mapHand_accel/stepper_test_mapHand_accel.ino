@@ -28,6 +28,7 @@ boolean setdir = LOW; // Set Direction
 int ppr = 400; //pulse per revolution based on stepper driver
 boolean isProcessing = false;
 
+AccelStepper stepper = AccelStepper(AccelStepper::DRIVER, 7, 6); 
 
 byte dataArray[3];
 
@@ -42,7 +43,7 @@ void revmotor (){
 
 void setup() {
 
-  AccelStepper(AccelStepper::DRIVER, 7, 6); 
+  
   
   pinMode (driverPUL, OUTPUT);
   pinMode (driverDIR, OUTPUT);
@@ -58,7 +59,7 @@ void setup() {
   Wire.onRequest(sendState);
 
   speedRange = minPd - maxPd;
-  
+  pulse(0, 90, 1);
 }
 
 void receiveEvent(int howMany) {
@@ -67,7 +68,7 @@ void receiveEvent(int howMany) {
     while (Wire.available()){
         for(int i = 0; i < howMany;i++){
             dataArray[i] = Wire.read();
-            Serial.println(dataArray[i]);
+            //Serial.println(dataArray[i]);
           }
 
             
@@ -81,17 +82,23 @@ void receiveEvent(int howMany) {
 
   void pulse(int stpr, int deg, int dir){
       
-      digitalWrite(driverDIR,dir);
+      //digitalWrite(driverDIR,dir);
       float pulseDeg = 360.0f/ppr;
       int pulsesNeeded = deg/pulseDeg;
       //Serial.println(pulseDeg); 
       //Serial.println(pulsesNeeded);
 
-      int middle = pulsesNeeded/2;
-      int speeds[pulsesNeeded];
-      int speedSteps = speedRange/middle;
-      Serial.print(pulsesNeeded);
-      for(int i = 0; i < pulsesNeeded; i++){
+      //int middle = pulsesNeeded/2;
+      //int speeds[pulsesNeeded];
+      //int speedSteps = speedRange/middle;
+      //Serial.print(pulsesNeeded);
+      
+      stepper.setMaxSpeed(700);
+      stepper.setAcceleration(100);
+      
+      stepper.moveTo(pulsesNeeded);
+      
+      /*for(int i = 0; i < pulsesNeeded; i++){
         if(i <= middle){
             speeds[i] = minPd - (i * speedSteps);
             //Serial.println(speeds[i]);
@@ -101,16 +108,16 @@ void receiveEvent(int howMany) {
             //Serial.println(speeds[i]);
           }
           
-      }
+      }*/
 
       
-      for(int i = 0; i < pulsesNeeded; i++){ //pulses the motor for the desired steps
+      /*for(int i = 0; i < pulsesNeeded; i++){ //pulses the motor for the desired steps
       
       digitalWrite(driverPUL,HIGH);
       delayMicroseconds(speeds[i]); //delay determines speed
       digitalWrite(driverPUL,LOW);
       delayMicroseconds(speeds[i]);
-      }
+      }*/
 
       
     }
@@ -129,6 +136,15 @@ void receiveEvent(int howMany) {
 
 void loop() {
 
+    
+    if(stepper.distanceToGo() == 0){
+        Serial.println(stepper.currentPosition());
+        stepper.moveTo(-stepper.currentPosition());
+      } else {
+        stepper.run();
+        
+      }
+    
     if(digitalRead(4)==HIGH){
         digitalWrite(driverDIR,HIGH);
         digitalWrite(driverPUL,HIGH);
