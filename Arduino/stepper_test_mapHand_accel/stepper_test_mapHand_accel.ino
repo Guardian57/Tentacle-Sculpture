@@ -49,8 +49,8 @@ void setup() {
   pinMode (driverDIR, OUTPUT);
   pinMode (8, INPUT);
   pinMode (4, INPUT);
+  pinMode (2, INPUT);
   
-  //attachInterrupt(digitalPinToInterrupt(reverseSwitch), revmotor, FALLING);
   Serial.begin(9600);
 
   Wire.begin(0x8);
@@ -137,29 +137,31 @@ void receiveEvent(int howMany) {
 void loop() {
 
     
-    if(stepper.distanceToGo() == 0){
-        Serial.println(stepper.currentPosition());
-        stepper.moveTo(-stepper.currentPosition());
-      } else {
-        stepper.run();
-        
-      }
+//    if(stepper.distanceToGo() == 0){
+//        Serial.println(stepper.currentPosition());
+//        stepper.moveTo(-stepper.currentPosition());
+//      } else {
+//        stepper.run();
+//        
+//      }
+
+    if(digitalRead(2)==LOW){
+        stepper.setCurrentPosition(0);
+        Serial.print("hi");
+    }
     
     if(digitalRead(4)==HIGH){
-        digitalWrite(driverDIR,HIGH);
-        digitalWrite(driverPUL,HIGH);
-        delayMicroseconds(pd);
-        digitalWrite(driverPUL,LOW);
-        delayMicroseconds(pd);
+       
+        stepper.move(15);
+        Serial.println("go");
+        
      }
 
      if(digitalRead(8)==HIGH){
-        digitalWrite(driverDIR,LOW);
-        digitalWrite(driverPUL,HIGH);
-        delayMicroseconds(pd);
-        digitalWrite(driverPUL,LOW);
-        delayMicroseconds(pd);
+        
+        stepper.moveTo(25);
      }
+     stepper.run();
     /*
     pd = map((analogRead(spd)),0,1023,2000,50);
     digitalWrite(driverDIR,setdir);
