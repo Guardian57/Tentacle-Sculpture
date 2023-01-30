@@ -25,7 +25,7 @@ int minPd = 3000;
 int maxPd = 500;
 int speedRange = 500;
 boolean setdir = LOW; // Set Direction
-int ppr = 400; //pulse per revolution based on stepper driver
+int ppr = 800; //pulse per revolution based on stepper driver
 boolean isProcessing = false;
 
 AccelStepper stepper = AccelStepper(AccelStepper::DRIVER, 7, 6); 
@@ -145,6 +145,10 @@ void loop() {
 //        
 //      }
 
+    if(stepper.distanceToGo() == 0) {
+       stepper.run();
+    }
+    
     if(digitalRead(2)==LOW){
         stepper.setCurrentPosition(0);
         Serial.print("hi");
@@ -159,7 +163,7 @@ void loop() {
 
      if(digitalRead(8)==HIGH){
         
-        stepper.moveTo(25);
+        stepper.move(-15);
      }
      stepper.run();
     /*
