@@ -15,20 +15,24 @@
 
 int reverseSwitch = 2;  // Push button for reverse
 int driverPUL = 7;    // PUL- pin
-int driverDIR = 6;    // DIR- pin
-int spd = A0;     // Potentiometer
+int driverDIR = 6;
 
-// Variables
 
-int pd = 2500;// Pulse Delay period
-int minPd = 3000;
-int maxPd = 500;
-int speedRange = 500;
+const int stepperPins[][2] = {{7, 6},
+                              {0, 0}
+                             }; // (address, PUL, DIR)
+
+int stepperInfo[][2] = {{700, 100},
+                        {700, 100},
+                        {700, 100}                     
+                      }; //(maxSpeed, acceleration)
+
+
 boolean setdir = LOW; // Set Direction
 int ppr = 800; //pulse per revolution based on stepper driver
 boolean isProcessing = false;
 
-AccelStepper stepper = AccelStepper(AccelStepper::DRIVER, 7, 6); 
+AccelStepper stepper[2]; 
 
 byte dataArray[3];
 
@@ -38,32 +42,40 @@ void revmotor (){
 
   setdir = !setdir;
   Serial.println("Boop");
+  
 }
 
 
 void setup() {
-
+  Serial.begin(9600);
   
   
-  pinMode (driverPUL, OUTPUT);
-  pinMode (driverDIR, OUTPUT);
+  for(int i = 0; i < 2; i++){
+    Serial.println("d");
+    stepper[i] = AccelStepper(AccelStepper::DRIVER, stepperPins[i][0], stepperPins[i][1]);
+    
+    pinMode (stepperPins[i][0], OUTPUT);
+    pinMode (stepperPins[i][1], OUTPUT);
+    
+  }
+  
   pinMode (8, INPUT);
   pinMode (4, INPUT);
   pinMode (2, INPUT);
   
-  Serial.begin(9600);
-
+  
+  
   Wire.begin(0x8);
 
   Wire.onReceive(receiveEvent);
-  Wire.onRequest(sendState);
+  Wire.onRequest(sendState); 
 
-  speedRange = minPd - maxPd;
-  pulse(0, 90, 1);
+  stepper[0].setMaxSpeed(700);
+  stepper[0].setAcceleration(100);
+  
 }
 
 void receiveEvent(int howMany) {
-    
     
     while (Wire.available()){
         for(int i = 0; i < howMany;i++){
@@ -71,58 +83,24 @@ void receiveEvent(int howMany) {
             //Serial.println(dataArray[i]);
           }
 
-            
-        
-          
-        
           pulse(dataArray[0], dataArray[1], dataArray[2]);
         
       }
   }
 
-  void pulse(int stpr, int deg, int dir){
+void pulse(int stpr, int deg, int dir){
       
-      //digitalWrite(driverDIR,dir);
       float pulseDeg = 360.0f/ppr;
       int pulsesNeeded = deg/pulseDeg;
-      //Serial.println(pulseDeg); 
-      //Serial.println(pulsesNeeded);
-
-      //int middle = pulsesNeeded/2;
-      //int speeds[pulsesNeeded];
-      //int speedSteps = speedRange/middle;
-      //Serial.print(pulsesNeeded);
+     
+      stepper[0].setMaxSpeed(700);
+      stepper[0].setAcceleration(100);
       
-      stepper.setMaxSpeed(700);
-      stepper.setAcceleration(100);
-      
-      stepper.moveTo(pulsesNeeded);
-      
-      /*for(int i = 0; i < pulsesNeeded; i++){
-        if(i <= middle){
-            speeds[i] = minPd - (i * speedSteps);
-            //Serial.println(speeds[i]);
-          }
-        if(i > middle){
-            speeds[i] = maxPd + ((i - middle) * speedSteps);
-            //Serial.println(speeds[i]);
-          }
+      stepper[0].moveTo(pulsesNeeded);
           
-      }*/
-
-      
-      /*for(int i = 0; i < pulsesNeeded; i++){ //pulses the motor for the desired steps
-      
-      digitalWrite(driverPUL,HIGH);
-      delayMicroseconds(speeds[i]); //delay determines speed
-      digitalWrite(driverPUL,LOW);
-      delayMicroseconds(speeds[i]);
-      }*/
-
-      
     }
 
-  void sendState(){
+void sendState(){
       byte num;
       if(isProcessing){
           num = 0x00;
@@ -130,49 +108,39 @@ void receiveEvent(int howMany) {
           num = 0x01;
           }
       
-      
       Wire.write(num);
+      
     }
 
+void setShaftPos(int stepr, int current) { //sets the current pos of the stepper. takes in the stepper array index and desired pos of the stepper
+      stepper[stepr].setCurrentPosition(current);
+      Serial.println("Stepper " + String(stepr) + " current Pos set to " + String(current));
+  }
+
 void loop() {
-
     
-//    if(stepper.distanceToGo() == 0){
-//        Serial.println(stepper.currentPosition());
-//        stepper.moveTo(-stepper.currentPosition());
-//      } else {
-//        stepper.run();
-//        
-//      }
-
-    if(stepper.distanceToGo() == 0) {
-       stepper.run();
+    
+    if(stepper[0].distanceToGo() != 0) {
+       stepper[0].run();
     }
     
     if(digitalRead(2)==LOW){
-        stepper.setCurrentPosition(0);
-        Serial.print("hi");
+        //insert
+        setShaftPos( 0, 10);
     }
     
     if(digitalRead(4)==HIGH){
        
-        stepper.move(15);
+        stepper[0].move(15);
         Serial.println("go");
         
      }
 
      if(digitalRead(8)==HIGH){
         
-        stepper.move(-15);
+        stepper[0].move(-15);
      }
-     stepper.run();
-    /*
-    pd = map((analogRead(spd)),0,1023,2000,50);
-    digitalWrite(driverDIR,setdir);
-    digitalWrite(driverPUL,HIGH);
-    delayMicroseconds(pd);
-    digitalWrite(driverPUL,LOW);
-    delayMicroseconds(pd);
-    */
- 
+     //Serial.println(stepper[0].targetPosition());
+     stepper[0].run();
+    
 }
