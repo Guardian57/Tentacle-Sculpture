@@ -10,6 +10,9 @@
 
 #include <Wire.h>
 #include <AccelStepper.h>
+#include <MultiStepper.h>
+
+#define M_NUM 2 //number of motors being driven
 
 // Defin pins
 
@@ -19,21 +22,24 @@ int driverDIR = 6;
 
 
 const int stepperPins[][2] = {{7, 6},
-                              {0, 0}
+                              {12, 11}
                              }; // (address, PUL, DIR)
 
-int stepperInfo[][2] = {{700, 100},
-                        {700, 100},
-                        {700, 100}                     
-                      }; //(maxSpeed, acceleration)
-
+int stepperInfo[][3] = {{700, 100, 0},
+                        {700, 100, 0},
+                        {700, 100, 0}                     
+                      }; //(maxSpeed, acceleration, target pos (degrees))
+long positions[M_NUM];
 
 boolean setdir = LOW; // Set Direction
 int ppr = 800; //pulse per revolution based on stepper driver
 boolean isProcessing = false;
 
-AccelStepper stepper[2]; 
+//Stepper handlers
+AccelStepper stepper[M_NUM]; 
+MultiStepper steppers;
 
+//temporary holding array for info set over i2c
 byte dataArray[3];
 
 // Interrupt Handler
@@ -50,15 +56,19 @@ void setup() {
   Serial.begin(9600);
   
   
-  for(int i = 0; i < 2; i++){
-    Serial.println("d");
-    stepper[i] = AccelStepper(AccelStepper::DRIVER, stepperPins[i][0], stepperPins[i][1]);
+  for(int i = 0; i < M_NUM; i++){
     
-    pinMode (stepperPins[i][0], OUTPUT);
-    pinMode (stepperPins[i][1], OUTPUT);
+    //define stepper
+    stepper[i] = AccelStepper(AccelStepper::DRIVER, stepperPins[i][0], stepperPins[i][1]);
+    //configure stepper
+    stepper[i].setMaxSpeed(stepperInfo[i][0]);
+    stepper[i].setAcceleration(stepperInfo[i][1]);
+    
+    
     
   }
-  
+
+  //sets button pinMode
   pinMode (8, INPUT);
   pinMode (4, INPUT);
   pinMode (2, INPUT);
@@ -70,34 +80,44 @@ void setup() {
   Wire.onReceive(receiveEvent);
   Wire.onRequest(sendState); 
 
-  stepper[0].setMaxSpeed(700);
-  stepper[0].setAcceleration(100);
+  
   
 }
 
 void receiveEvent(int howMany) {
-    
+    int degs[M_NUM]; 
     while (Wire.available()){
+        isProcessing = true;
         for(int i = 0; i < howMany;i++){
             dataArray[i] = Wire.read();
             //Serial.println(dataArray[i]);
           }
+          
+          
+          if(dataArray[0] == 0){
+              
+              for(int i = 1; i < M_NUM; i++){
+                  degs[i] = dataArray[i];
+                }
+              
+              pulse(0, degs);
+            }
 
-          pulse(dataArray[0], dataArray[1], dataArray[2]);
+          
         
       }
   }
 
-void pulse(int stpr, int deg, int dir){
+void pulse(int stpr, int deg[]){
       
+      //converts degrees into pulses factoring in micro steps
       float pulseDeg = 360.0f/ppr;
-      int pulsesNeeded = deg/pulseDeg;
+      for(int i = 0; i < M_NUM; i++){
+           positions[i] = deg[i]/pulseDeg;
+        }
      
-      stepper[0].setMaxSpeed(700);
-      stepper[0].setAcceleration(100);
-      
-      stepper[0].moveTo(pulsesNeeded);
-          
+      steppers.moveTo(positions);
+      moveStep();   
     }
 
 void sendState(){
@@ -115,6 +135,11 @@ void sendState(){
 void setShaftPos(int stepr, int current) { //sets the current pos of the stepper. takes in the stepper array index and desired pos of the stepper
       stepper[stepr].setCurrentPosition(current);
       Serial.println("Stepper " + String(stepr) + " current Pos set to " + String(current));
+  }
+
+void moveStep(){
+    steppers.runSpeedToPosition();
+    isProcessing = false;
   }
 
 void loop() {
