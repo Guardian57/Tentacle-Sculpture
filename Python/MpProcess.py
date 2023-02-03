@@ -119,7 +119,7 @@ class MpProcess:
                             print("cmd started ", format(cmd_out))
                             val_when_enter = hexClamp
                             print(abs(newPos))
-                            bus.write_i2c_block_data(addr,0x07,[abs(newPos),direction])
+                            bus.write_i2c_block_data(addr,0x07,[abs(hexClamp),direction])
                             
                     elif cmd_out == True:
                         status = bus.read_byte(addr)
