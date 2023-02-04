@@ -31,7 +31,7 @@ int stepperInfo[][3] = {{700, 100, 0},
                       }; //(maxSpeed, acceleration, target pos (degrees))
 long positions[M_NUM];
 
-boolean setdir = LOW; // Set Direction
+
 int ppr = 800; //pulse per revolution based on stepper driver
 boolean isProcessing = false;
 
@@ -42,14 +42,6 @@ MultiStepper steppers;
 //temporary holding array for info set over i2c
 byte dataArray[3];
 
-// Interrupt Handler
-
-void revmotor (){
-
-  setdir = !setdir;
-  Serial.println("Boop");
-  
-}
 
 
 void setup() {
@@ -61,10 +53,10 @@ void setup() {
     //define stepper
     stepper[i] = AccelStepper(AccelStepper::DRIVER, stepperPins[i][0], stepperPins[i][1]);
     //configure stepper
-    stepper[i].setMaxSpeed(stepperInfo[i][0]);
-    stepper[i].setAcceleration(stepperInfo[i][1]);
+    stepper[i].setMaxSpeed(100);
     
     
+    steppers.addStepper(stepper[i]);
     
   }
 
@@ -88,16 +80,19 @@ void receiveEvent(int howMany) {
     int degs[M_NUM]; 
     while (Wire.available()){
         isProcessing = true;
+        
         for(int i = 0; i < howMany;i++){
             dataArray[i] = Wire.read();
             //Serial.println(dataArray[i]);
           }
           
-          
-          if(dataArray[0] == 0){
+          //Serial.println("i don't get it...");
+          if(dataArray[0] == 7){
               
-              for(int i = 1; i < M_NUM; i++){
-                  degs[i] = dataArray[i];
+              for(int i = 1; i <= M_NUM; i++){
+                  degs[i-1] = dataArray[i];
+                  //Serial.println( i + ": " + String(dataArray[i]));
+                  
                 }
               
               pulse(0, degs);
@@ -112,12 +107,18 @@ void pulse(int stpr, int deg[]){
       
       //converts degrees into pulses factoring in micro steps
       float pulseDeg = 360.0f/ppr;
-      for(int i = 0; i < M_NUM; i++){
+      
+      for(int i = 0; i < 2; i++){
            positions[i] = deg[i]/pulseDeg;
+           Serial.println(String(i) + ": " + positions[i]);
         }
+        Serial.println("why");
+      
      
-      steppers.moveTo(positions);
-      moveStep();   
+      
+      
+      moveStep(); 
+        
     }
 
 void sendState(){
@@ -138,7 +139,10 @@ void setShaftPos(int stepr, int current) { //sets the current pos of the stepper
   }
 
 void moveStep(){
-    steppers.runSpeedToPosition();
+    steppers.moveTo(positions);
+    
+    
+    Serial.println("wahhhaat");
     isProcessing = false;
   }
 
@@ -157,7 +161,7 @@ void loop() {
     if(digitalRead(4)==HIGH){
        
         stepper[0].move(15);
-        Serial.println("go");
+        //Serial.println("go");
         
      }
 
@@ -165,7 +169,8 @@ void loop() {
         
         stepper[0].move(-15);
      }
+     steppers.runSpeedToPosition();
      //Serial.println(stepper[0].targetPosition());
-     stepper[0].run();
+     //stepper[0].run();
     
 }
