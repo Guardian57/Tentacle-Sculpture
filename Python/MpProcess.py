@@ -36,6 +36,7 @@ class MpProcess:
       
     def __init__(self, curPos, frame=None):
         self.currentPos = curPos
+        bus.write_i2c_block_data(addr,0x00,[curPos])
         self.frame = frame
         self.image = frame
         self.hand_state = 0
@@ -120,7 +121,7 @@ class MpProcess:
                             print("cmd started ", format(cmd_out))
                             val_when_enter = hexClamp
                             print("runs")
-                            bus.write_i2c_block_data(addr,0x07,[hexClamp,opp])
+                            bus.write_i2c_block_data(addr,0x07,[hexClamp,hexClamp])
                             
                     elif cmd_out == True:
                         status = bus.read_byte(addr)
