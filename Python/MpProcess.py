@@ -83,7 +83,7 @@ class MpProcess:
             #pose 
                 mp_drawing.draw_landmarks(image,results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
                 
-                cv2.line(image, (15, minlim), (15, maxlim), (255,0,0), 5)
+                cv2.line(image, (minlim, 15), (maxlim, 15), (255,0,0), 5) #draws horizontal line
                 
                 self.image = image
                 
@@ -98,28 +98,29 @@ class MpProcess:
                     
                     if cmd_out == False:
                     
-                        handPosToRot = map_range(hand[1] * 480, minlim, maxlim, 0, 180)
+                        handPosToRot = map_range(hand[0] * 640, minlim, maxlim, 0, 180) #mapping hand screen pos to 180 deg rotation. hand[] is multiplied by screen dimentions
                         
                         clamped = clamp_number(handPosToRot, 0, 180)
                         
                         hexClamp = int(clamped)
                         
-                       
-                        print('what')
-                        newPos = self.currentPos - hexClamp
-                        print('no way')
-                        direction = None
-                        if newPos >= 0:
-                            direction = 0x1
-                        elif newPos < 0:
-                            direction = 0x0
+                        opp = 180 - hexClamp
                         
-                        if newPos >= 2 or newPos <= -2:
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        if cmd_out == False:
                             cmd_out = True
                             print("cmd started ", format(cmd_out))
                             val_when_enter = hexClamp
-                            print(abs(newPos))
-                            bus.write_i2c_block_data(addr,0x07,[abs(hexClamp),direction])
+                            print("runs")
+                            bus.write_i2c_block_data(addr,0x07,[hexClamp,opp])
                             
                     elif cmd_out == True:
                         status = bus.read_byte(addr)
