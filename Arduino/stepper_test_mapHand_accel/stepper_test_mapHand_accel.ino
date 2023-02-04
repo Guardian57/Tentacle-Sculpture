@@ -1,11 +1,5 @@
 /*
-  Stepper Motor Test
-  stepper-test01.ino
-  Uses MA860H or similar Stepper Driver Unit
-  Has speed control & reverse switch
   
-  DroneBot Workshop 2019
-  https://dronebotworkshop.com
 */
 
 #include <Wire.h>
@@ -42,7 +36,9 @@ MultiStepper steppers;
 //temporary holding array for info set over i2c
 byte dataArray[3];
 
-
+int cntrM = 0; //the current manually controlled motor
+boolean isPress = false;
+boolean manualCntr = true;
 
 void setup() {
   Serial.begin(9600);
@@ -53,9 +49,11 @@ void setup() {
     //define stepper
     stepper[i] = AccelStepper(AccelStepper::DRIVER, stepperPins[i][0], stepperPins[i][1]);
     //configure stepper
-    stepper[i].setMaxSpeed(100);
+    stepper[i].setMaxSpeed(500);
+
+    stepper[i].setAcceleration(100);
     
-    
+    //add stepper to MultiStepper
     steppers.addStepper(stepper[i]);
     
   }
@@ -64,6 +62,7 @@ void setup() {
   pinMode (8, INPUT);
   pinMode (4, INPUT);
   pinMode (2, INPUT);
+  pinMode (3, INPUT);
   
   
   
@@ -77,7 +76,9 @@ void setup() {
 }
 
 void receiveEvent(int howMany) {
+    
     int degs[M_NUM]; 
+    
     while (Wire.available()){
         isProcessing = true;
         
@@ -85,7 +86,17 @@ void receiveEvent(int howMany) {
             dataArray[i] = Wire.read();
             //Serial.println(dataArray[i]);
           }
-          
+
+          if(dataArray[0] == 0){
+            
+            //set starting position
+            for(int i = 0; i < M_NUM; i++){
+              setShaftPos(i , dataArray[1]);
+            }
+            manualCntr = false;
+
+            }
+            
           //Serial.println("i don't get it...");
           if(dataArray[0] == 7){
               
@@ -134,7 +145,10 @@ void sendState(){
     }
 
 void setShaftPos(int stepr, int current) { //sets the current pos of the stepper. takes in the stepper array index and desired pos of the stepper
-      stepper[stepr].setCurrentPosition(current);
+      float pulseDeg = 360.0f/ppr;
+      int steps = current/pulseDeg;
+      
+      stepper[stepr].setCurrentPosition(steps);
       Serial.println("Stepper " + String(stepr) + " current Pos set to " + String(current));
   }
 
@@ -143,33 +157,48 @@ void moveStep(){
     
     
     Serial.println("wahhhaat");
-    isProcessing = false;
+    
   }
 
 void loop() {
     
     
-    if(stepper[0].distanceToGo() != 0) {
-       stepper[0].run();
-    }
+    
+
+    if(digitalRead(3)==HIGH and isPress == false){
+        cntrM = (cntrM + 1) % M_NUM;
+        Serial.println("controlling Motor " + String(cntrM));
+        isPress = true;
+      } else if(digitalRead(3)==LOW and isPress == true) {
+          isPress = false;
+        }
     
     if(digitalRead(2)==LOW){
         //insert
-        setShaftPos( 0, 10);
+        setShaftPos( 0, 0);
     }
     
     if(digitalRead(4)==HIGH){
        
-        stepper[0].move(15);
+        stepper[cntrM].move(15);
         //Serial.println("go");
         
      }
 
      if(digitalRead(8)==HIGH){
         
-        stepper[0].move(-15);
+        stepper[cntrM].move(-15);
      }
-     steppers.runSpeedToPosition();
+
+     if(manualCntr){
+        stepper[cntrM].run();
+      } else {
+          steppers.runSpeedToPosition();
+          isProcessing = false;
+        }
+     
+     
+     
      //Serial.println(stepper[0].targetPosition());
      //stepper[0].run();
     
