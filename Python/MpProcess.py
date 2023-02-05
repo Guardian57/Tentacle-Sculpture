@@ -51,8 +51,8 @@ class MpProcess:
     def process (self):
         #Initiate holistic mdel
         
-        maxlim = 430
-        minlim = 50
+        maxlim = 540
+        minlim = 100
         cmd_out = False
         val_when_enter = None
         
@@ -121,7 +121,7 @@ class MpProcess:
                             print("cmd started ", format(cmd_out))
                             val_when_enter = hexClamp
                             print("runs")
-                            bus.write_i2c_block_data(addr,0x07,[hexClamp,hexClamp])
+                            bus.write_i2c_block_data(addr,0x07,[hexClamp,opp])
                             
                     elif cmd_out == True:
                         status = bus.read_byte(addr)
