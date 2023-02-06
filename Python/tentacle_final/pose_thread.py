@@ -1,6 +1,5 @@
 import mediapipe as mp
 import cv2
-from CountsPerSec import CountsPerSec
 from VideoGet import VideoGet
 from VideoShow import VideoShow
 from MpProcess import MpProcess
