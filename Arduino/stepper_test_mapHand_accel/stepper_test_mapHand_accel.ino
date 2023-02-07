@@ -26,7 +26,7 @@ int stepperInfo[][3] = {{700, 100, 0},
 long positions[M_NUM];
 
 
-int ppr = 800; //pulse per revolution based on stepper driver
+int ppr = 3000; //pulse per revolution based on stepper driver
 boolean isProcessing = false;
 
 //Stepper handlers
@@ -49,7 +49,7 @@ void setup() {
     //define stepper
     stepper[i] = AccelStepper(AccelStepper::DRIVER, stepperPins[i][0], stepperPins[i][1]);
     //configure stepper
-    stepper[i].setMaxSpeed(500);
+    stepper[i].setMaxSpeed(1000);
 
     stepper[i].setAcceleration(100);
     
@@ -180,14 +180,14 @@ void loop() {
     
     if(digitalRead(4)==HIGH){
        
-        stepper[cntrM].move(15);
+        stepper[cntrM].move(50);
         //Serial.println("go");
         
      }
 
      if(digitalRead(8)==HIGH){
         
-        stepper[cntrM].move(-15);
+        stepper[cntrM].move(-50);
      }
 
      if(manualCntr){
