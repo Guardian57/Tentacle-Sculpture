@@ -10,7 +10,7 @@ import time
 show_video = True
 process_frames = True
 
-#cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(0)
 value = input("Please enter starting rotation: ")
 
 start_rot = int(value)
@@ -19,11 +19,12 @@ value = input("Type 'yes' to start tracking: ")
 if value == 'yes':
     print("calibration complete. starting program...")
 
-video_getter = VideoGet(0).start()
+(grabbed, frame) = cap.read()
+
 if process_frames:
-    video_process = MpProcess(start_rot, video_getter.frame)
+    video_process = MpProcess(start_rot, cap.read())
 if show_video:
-    video_shower = VideoShow(video_getter.frame).start()
+    video_shower = VideoShow(frame).start()
 
 
 # cps = CountsPerSec().start()
@@ -47,20 +48,13 @@ def putIterationsPerSec(frame, iterations_per_sec):
 
 while True:
     
+    (grabbed, frame) = cap.read()
     
-    if video_getter.stopped:
-        
-        if show_video:
-            video_shower.stop()
-            
-        video_getter.stop()
-        if process_frames:
-            video_process.stop()
-        break
+    
     
                                                             
 
-    frame = video_getter.frame
+    
     frame = cv2.resize(frame, (640, 480))
     #frame = putIterationsPerSec(frame, cps.countsPerSec())
     #cps.increment()
@@ -68,7 +62,7 @@ while True:
     if process_frames:
         video_process.frame = frame
     
-    print("this is playng")
+    
     video_process.process()
     
     
@@ -84,5 +78,5 @@ while True:
                 
         
 
-#cap.release()
+cap.release()
 cv2.destroyAllWindows()
