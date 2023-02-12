@@ -21,7 +21,7 @@ if value == 'yes':
 
 video_getter = VideoGet(0).start()
 if process_frames:
-    video_process = MpProcess(start_rot, video_getter.frame).start()
+    video_process = MpProcess(start_rot, video_getter.frame)
 if show_video:
     video_shower = VideoShow(video_getter.frame).start()
 
@@ -68,15 +68,20 @@ while True:
     if process_frames:
         video_process.frame = frame
     
+    print("this is playng")
+    video_process.process()
     
-
     
     if show_video:
         if process_frames:
             video_shower.frame = video_process.image
+            
         else:
             video_shower.frame = frame
+            
     
+            
+                
         
 
 #cap.release()

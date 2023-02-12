@@ -58,7 +58,7 @@ class MpProcess:
         
         with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
             
-            while not self.stopped:
+            #while not self.stopped:
                 
                 image = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
                 image.flags.writeable = False
@@ -139,6 +139,6 @@ class MpProcess:
                     print('oh no')
                     pass
                   
-    
+                
     def stop(self):
         self.stopped = True 
