@@ -51,7 +51,7 @@ void setup() {
     //configure stepper
     stepper[i].setMaxSpeed(1000);
 
-    stepper[i].setAcceleration(100);
+    stepper[i].setAcceleration(700);
     
     //add stepper to MultiStepper
     steppers.addStepper(stepper[i]);
@@ -80,7 +80,7 @@ void receiveEvent(int howMany) {
     int degs[M_NUM]; 
     
     while (Wire.available()){
-        isProcessing = true;
+        //isProcessing = true;
         
         for(int i = 0; i < howMany;i++){
             dataArray[i] = Wire.read();
@@ -153,10 +153,14 @@ void setShaftPos(int stepr, int current) { //sets the current pos of the stepper
   }
 
 void moveStep(){
-    steppers.moveTo(positions);
     
+
+    for(int i = 0; i < M_NUM; i++) {
+        stepper[i].moveTo(positions[i]);
+      }
     
     Serial.println("wahhhaat");
+    
     
   }
 
@@ -192,10 +196,14 @@ void loop() {
 
      if(manualCntr){
         stepper[cntrM].run();
-      } else {
-          steppers.runSpeedToPosition();
-          isProcessing = false;
+     }
+     else {
+        for(int i = 0; i < M_NUM; i++) {
+        stepper[i].run();
+
         }
+      }
+     
      
      
      
