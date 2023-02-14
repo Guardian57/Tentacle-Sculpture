@@ -78,6 +78,6 @@ while True:
             video_shower.frame = frame
     
         
-
+video_getter.stream.release()
 #cap.release()
 cv2.destroyAllWindows()

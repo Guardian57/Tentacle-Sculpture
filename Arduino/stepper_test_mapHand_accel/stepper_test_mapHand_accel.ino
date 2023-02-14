@@ -79,11 +79,29 @@ void receiveEvent(int howMany) {
     
     int degs[M_NUM]; 
     
-    while (Wire.available()){
+    while (Serial.available() > 0){
+        int INPUT_SIZE = (M_NUM * 2);
         //isProcessing = true;
+        char input[INPUT_SIZE + 1];
+        byte size = Serial.readBytes(input, INPUT_SIZE);
+        input[size] = 0;
+
+         char* command = strtok(input, '_');
+         int sta = 0;
+         while (command != 0){
+          dataArray[sta] = atoi(command);
+          Serial.println(dataArray[sta]);
+          command = strtok(0, '_');
+          }
         
-        for(int i = 0; i < howMany;i++){
-            dataArray[i] = Wire.read();
+        String message = Serial.readStringUntil("\n");
+        for(int i = 0; i < message.length();i++){
+            int index = message.indexOf(' ');
+            if(index == -1) {
+              dataArray[i] = message[i];
+            }
+            
+         
             //Serial.println(dataArray[i]);
           }
 
@@ -121,9 +139,9 @@ void pulse(int stpr, int deg[]){
       
       for(int i = 0; i < 2; i++){
            positions[i] = deg[i]/pulseDeg;
-           Serial.println(String(i) + ": " + positions[i]);
+           
         }
-        Serial.println("why");
+        
       
      
       
@@ -159,7 +177,7 @@ void moveStep(){
         stepper[i].moveTo(positions[i]);
       }
     
-    Serial.println("wahhhaat");
+    
     
     
   }
@@ -171,7 +189,7 @@ void loop() {
 
     if(digitalRead(3)==HIGH and isPress == false){
         cntrM = (cntrM + 1) % M_NUM;
-        Serial.println("controlling Motor " + String(cntrM));
+        //Serial.println("controlling Motor " + String(cntrM));
         isPress = true;
       } else if(digitalRead(3)==LOW and isPress == true) {
           isPress = false;

@@ -1,11 +1,13 @@
 from threading import Thread
 import cv2
 import mediapipe as mp
-from smbus import SMBus
+import serial
 import time
 
 addr = 0x8 # bus address
-bus = SMBus(1) # indicates /dev/ic2-1
+ser = serial.Serial('/dev/cu.usbmodem14101', 9600, timeout=1.0)
+time.sleep(3)
+ser.reset_input_buffer();
 
 
 
@@ -36,7 +38,7 @@ class MpProcess:
       
     def __init__(self, curPos, frame=None):
         self.currentPos = curPos
-        bus.write_i2c_block_data(addr,0x00,[curPos])
+        
         self.frame = frame
         self.image = frame
         self.hand_state = 0
@@ -121,10 +123,10 @@ class MpProcess:
                             print("cmd started ", format(cmd_out))
                             val_when_enter = hexClamp
                             print("runs")
-                            bus.write_i2c_block_data(addr,0x07,[hexClamp,opp])
+                            ser.write(hexClamp + "_" + opp + "\n".encode('utf-8'))
                             
                     elif cmd_out == True:
-                        status = bus.read_byte(addr)
+                        
                         print(status)
                 #bus.write_byte(addr, hexClamp)
                         if status == 1:
