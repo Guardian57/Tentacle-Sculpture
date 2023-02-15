@@ -24,7 +24,7 @@ if value == 'yes':
 if process_frames:
     video_process = MpProcess(start_rot, cap.read())
 if show_video:
-    video_shower = VideoShow(frame).start()
+    video_shower = VideoShow(frame)
 
 
 # cps = CountsPerSec().start()
@@ -49,13 +49,14 @@ def putIterationsPerSec(frame, iterations_per_sec):
 while True:
     
     (grabbed, frame) = cap.read()
-    
+    if not grabbed or cv2.waitKey(1) == ord("q"):
+            break
     
     
                                                             
 
     
-    frame = cv2.resize(frame, (640, 480))
+    frame = cv2.resize(frame, (640, 360))
     #frame = putIterationsPerSec(frame, cps.countsPerSec())
     #cps.increment()
     
@@ -72,11 +73,13 @@ while True:
             
         else:
             video_shower.frame = frame
+   
+    cv2.imshow("Video", video_process.image)
             
     
             
                 
         
-video_getter.stream.release()
-#cap.release()
+
+cap.release()
 cv2.destroyAllWindows()

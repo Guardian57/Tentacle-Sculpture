@@ -26,7 +26,7 @@ int stepperInfo[][3] = {{700, 100, 0},
 long positions[M_NUM];
 
 
-int ppr = 3000; //pulse per revolution based on stepper driver
+int ppr = 200; //pulse per revolution based on stepper driver
 boolean isProcessing = false;
 
 //Stepper handlers
@@ -39,6 +39,7 @@ byte dataArray[3];
 int cntrM = 0; //the current manually controlled motor
 boolean isPress = false;
 boolean manualCntr = true;
+boolean commandIn = false;
 
 void setup() {
   Serial.begin(9600);
@@ -79,20 +80,7 @@ void receiveEvent(int howMany) {
     
     int degs[M_NUM]; 
     
-    while (Serial.available() > 0){
-        int INPUT_SIZE = (M_NUM * 2);
-        //isProcessing = true;
-        char input[INPUT_SIZE + 1];
-        byte size = Serial.readBytes(input, INPUT_SIZE);
-        input[size] = 0;
-
-         char* command = strtok(input, '_');
-         int sta = 0;
-         while (command != 0){
-          dataArray[sta] = atoi(command);
-          Serial.println(dataArray[sta]);
-          command = strtok(0, '_');
-          }
+    
         
         String message = Serial.readStringUntil("\n");
         for(int i = 0; i < message.length();i++){
@@ -104,6 +92,7 @@ void receiveEvent(int howMany) {
          
             //Serial.println(dataArray[i]);
           }
+
 
           if(dataArray[0] == 0){
             
@@ -130,7 +119,7 @@ void receiveEvent(int howMany) {
           
         
       }
-  }
+  
 
 void pulse(int stpr, int deg[]){
       
@@ -184,7 +173,28 @@ void moveStep(){
 
 void loop() {
     
-    
+    if (Serial.available() > 0){
+      String message = Serial.readStringUntil("\n");
+      int rotations[2];
+      int i = 0;
+
+      char *token = strtok((char *)message.c_str(), "_");
+      while (token != NULL && i < 2) {
+        rotations[i] = atof(token);
+        token = strtok(NULL, "_");
+        i++;
+        }
+
+        stepper[0].moveTo(rotations[1]);
+        stepper[1].moveTo(rotations[0]);
+        
+        Serial.println(rotations[0]);
+        Serial.println(rotations[1]);
+
+      
+         
+          
+    }
     
 
     if(digitalRead(3)==HIGH and isPress == false){

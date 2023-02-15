@@ -122,16 +122,19 @@ class MpProcess:
                             cmd_out = True
                             print("cmd started ", format(cmd_out))
                             val_when_enter = hexClamp
-                            print("runs")
-                            ser.write(hexClamp + "_" + opp + "\n".encode('utf-8'))
+                            print(hexClamp)
+                            stri = str(hexClamp) + "_" + str(opp) + "\n"
+                            ser.write(stri.encode('utf-8'))
+                            print(stri)
+                            time.sleep(1);
                             
                     elif cmd_out == True:
                         
-                        print(status)
+                            
+                            
+                        
                 #bus.write_byte(addr, hexClamp)
-                        if status == 1:
-                            cmd_out = False
-                            #print(self.currentPos)
+                        
                         self.currentPos = val_when_enter
                     
                                        
