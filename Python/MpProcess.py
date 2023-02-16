@@ -50,8 +50,8 @@ class MpProcess:
     
     def process (self):
         #Initiate holistic mdel
-        motor_top_one = 90;
-        motor_top_two = 0;
+        motor_top_one = 45;
+        motor_top_two = 100;
         
         maxlim = 540
         minlim = 100
@@ -100,14 +100,16 @@ class MpProcess:
                     hand = [landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].x, landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].y]
                     
                     if cmd_out == False:
-                    
-                        handPosToRot = map_range(hand[0] * 640, minlim, maxlim, 0, motor_top_one) #mapping hand screen pos to 180 deg rotation. hand[] is multiplied by screen dimentions
                         
-                        clamped = clamp_number(handPosToRot, 0, motor_top_one)
+                        largest_mpose_top = max(motor_top_one, motor_top_two)
                         
-                        hexClamp = int(clamped)
+                        handPosToRot = map_range(hand[0] * 640, minlim, maxlim, 0, largest_mpose_top) #mapping hand screen pos to 180 deg rotation. hand[] is multiplied by screen dimentions
                         
-                        opp = motor_top_one - hexClamp
+                        clamped = clamp_number(handPosToRot, 0, largest_mpose_top)
+                        
+                        motor_bot_one = int(clamped)
+                        
+                        motor_bot_two = motor_bot_one + largest_mpose_top
                         
                         
                         
@@ -121,9 +123,9 @@ class MpProcess:
                         if cmd_out == False:
                             cmd_out = True
                             print("cmd started ", format(cmd_out))
-                            val_when_enter = hexClamp
+                            val_when_enter = motor_bot_one
                             print("runs")
-                            bus.write_i2c_block_data(addr,0x07,[hexClamp,hexClamp])
+                            bus.write_i2c_block_data(addr,0x07,[motor_bot_one, motor_bot_two])
                             
                     elif cmd_out == True:
                         status = bus.read_byte(addr)
