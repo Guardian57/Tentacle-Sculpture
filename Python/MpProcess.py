@@ -50,6 +50,8 @@ class MpProcess:
     
     def process (self):
         #Initiate holistic mdel
+        motor_top_one = 90;
+        motor_top_two = 0;
         
         maxlim = 540
         minlim = 100
@@ -99,13 +101,13 @@ class MpProcess:
                     
                     if cmd_out == False:
                     
-                        handPosToRot = map_range(hand[0] * 640, minlim, maxlim, 0, 180) #mapping hand screen pos to 180 deg rotation. hand[] is multiplied by screen dimentions
+                        handPosToRot = map_range(hand[0] * 640, minlim, maxlim, 0, motor_top_one) #mapping hand screen pos to 180 deg rotation. hand[] is multiplied by screen dimentions
                         
-                        clamped = clamp_number(handPosToRot, 0, 180)
+                        clamped = clamp_number(handPosToRot, 0, motor_top_one)
                         
                         hexClamp = int(clamped)
                         
-                        opp = 180 - hexClamp
+                        opp = motor_top_one - hexClamp
                         
                         
                         
