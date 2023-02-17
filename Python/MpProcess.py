@@ -50,8 +50,8 @@ class MpProcess:
     
     def process (self):
         #Initiate holistic mdel
-        motor_top_one = 45;
-        motor_top_two = 100;
+        motor_top_one = 135;
+        motor_top_two = 0;
         
         maxlim = 540
         minlim = 100
@@ -103,13 +103,18 @@ class MpProcess:
                         
                         largest_mpose_top = max(motor_top_one, motor_top_two)
                         
-                        handPosToRot = map_range(hand[0] * 640, minlim, maxlim, 0, largest_mpose_top) #mapping hand screen pos to 180 deg rotation. hand[] is multiplied by screen dimentions
+                        handPos = hand[0] * 640
                         
-                        clamped = clamp_number(handPosToRot, 0, largest_mpose_top)
+                        motor_bot_one_map = map_range(handPos, minlim, maxlim, 0, largest_mpose_top) #mapping hand screen pos to 180 deg rotation. hand[] is multiplied by screen dimentions
+                        motor_bot_two_map = map_range(handPos, minlim, maxlim, 0, largest_mpose_top)
                         
-                        motor_bot_one = int(clamped)
                         
-                        motor_bot_two = motor_bot_one + largest_mpose_top
+                        Motor_bot_one_clamped = clamp_number(motor_bot_one_map, 0, largest_mpose_top)
+                        Motor_bot_two_clamped = clamp_number(motor_bot_two_map, 0, largest_mpose_top)
+                        
+                        motor_bot_one = int(Motor_bot_one_clamped)
+                        
+                        motor_bot_two = motor_bot_one + (180 - largest_mpose_top) 
                         
                         
                         
@@ -124,7 +129,8 @@ class MpProcess:
                             cmd_out = True
                             print("cmd started ", format(cmd_out))
                             val_when_enter = motor_bot_one
-                            print("runs")
+                            print('Motor_bottom_one: ', motor_bot_one)
+                            print('Motor_bottom_one: ', motor_bot_two)
                             bus.write_i2c_block_data(addr,0x07,[motor_bot_one, motor_bot_two])
                             
                     elif cmd_out == True:
