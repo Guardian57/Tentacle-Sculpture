@@ -2,7 +2,7 @@
 #include <AccelStepper.h>
 #include <MultiStepper.h>
 
-#define M_NUM 2
+#define M_NUM 4
 
 // define pins
 
@@ -10,11 +10,15 @@ int reverseSwitch = 2;
 
 
 const int stepperPins[][2] = {
-  {7, 6},
-  {12, 11}
+  {6, 7},
+  {8, 9},
+  {10, 11},
+  {12, 13}
 }; // (address, PUL, DIR)
 
-int stepperInfo[][3] = {{700, 100, 0},
+int stepperInfo[][3] = {{1500, 1200, 0},
+                        {1500, 1200, 0},
+                        {700, 100, 0},
                         {700, 100, 0}                   
                       }; //(maxSpeed, acceleration, target pos (degrees))
                       
@@ -27,16 +31,15 @@ int ppr = 3000; //pulse per revolution based on stepper driver
 AccelStepper stepper[M_NUM]; 
 MultiStepper steppers;
 
-// variables for tracking incoming and outgoing data
-
 byte motorData = 0;
 
 
-
+// variables for reading data from pi
 String str = "";
 char chars[32];
 volatile boolean receiveFlag = false;
-String runCommands = "";
+
+boolean moving = false;
 
 
 void setup() {
@@ -47,15 +50,16 @@ void setup() {
   Wire.onRequest(sendData);
 
   Serial.begin(9600);
-  
+
   for(int i = 0; i < M_NUM; i++){
     
     //define stepper
     stepper[i] = AccelStepper(AccelStepper::DRIVER, stepperPins[i][0], stepperPins[i][1]);
-    //configure stepper
-    stepper[i].setMaxSpeed(500);
     
-    stepper[i].setAcceleration(100);
+    //configure stepper
+    stepper[i].setMaxSpeed(stepperInfo[i][0]);
+    stepper[i].setSpeed(stepperInfo[i][0]);
+    stepper[i].setAcceleration(stepperInfo[i][1]);
     
     //add stepper to MultiStepper
     steppers.addStepper(stepper[i]);
@@ -66,17 +70,21 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
-  
+
+  // checks for message from pi
   if (receiveFlag == true) {
     parseString(str); // parses new string for commands
     receiveFlag = false;
   }
 
   
-  stepper[0].run();
+  // runs the motors
+  for(int i = 0; i < M_NUM; i++){
+    
+    stepper[i].run();
+    updateMotorData();
+  }
   
-  
-  //printMotorData();
   
 }
 
@@ -98,16 +106,15 @@ void receiveEvent(int howMany){ // took this off the interwebs. gets a string co
 
   str = chars; // probs don't need this but it's here in case we do
   
-  Serial.println(str);
-  
+  Serial.println("received: " + str);
+
   receiveFlag = true;
-  printMotorData();
 
 }
 
 void sendData()
 {
-  //Serial.println(motorData);
+  //printMotorData();
   Wire.write(motorData);
 }
 
@@ -118,9 +125,10 @@ void parseString(String cmd){
     
     int motorNum = cmd.substring(0, 1).toInt();
     int targetNum = cmd.substring(2, cmd.length()).toInt();
-    Serial.println(String(motorNum) + "_" + String(targetNum));
+    //Serial.println(String(motorNum) + "_" + String(targetNum));
     stepperInfo[motorNum][2] = targetNum;
     pulse(motorNum, targetNum);
+    
     
   }
 
@@ -128,32 +136,48 @@ void parseString(String cmd){
     Serial.println("Reset pog");
     for (int i = 0; i < M_NUM; i++) {
       //rotate calibrate celebrate
-  
+      positions[i] = 0;
+      stepper[i].setCurrentPosition(0);
+      
     }
   }
-  //Serial.println(runCommands);
+
+  if(cmd.indexOf("finish")>= 0){
+    moving = true;
+  }
 
 }
 
 void pulse(int stpr, int deg){
-  
-      Serial.println("pulse " + String(stpr) + " " + String(deg));
+      String printer = "pulse " + String(stpr) + " " + String(deg);
+      Serial.println(printer);
+      Serial.println();
       //converts degrees into pulses factoring in micro steps
       float pulseDeg = 360.0f/ppr;
-      positions[stpr] = deg/pulseDeg;
-      stepper[stpr].moveTo(deg/pulseDeg);
-      //steppers.moveTo(positions);
+      positions[stpr] = deg;
+      long pulsePositions[M_NUM];
+      
+      bitWrite(motorData, stpr, 1);
+      printMotorData();
+      stepper[stpr].moveTo(positions[stpr]/pulseDeg);
       
       
-      /*
-      for(int i = 0; i < 2; i++){
-           positions[i] = deg[i]/pulseDeg;
-           Serial.println(String(i) + ": " + positions[i]);
-        }
-        Serial.println("i want to throw myself into the sea");
-      */
-     
       
+}
+
+void updateMotorData(){
+  byte oldData = motorData;
+  for(int i = 0; i < M_NUM; i++){
+    if(stepper[i].isRunning()){
+      bitWrite(motorData, i, 1);
+    }
+    else{
+      bitWrite(motorData, i, 0);
+    }
+  }
+  if(oldData != motorData){
+  //printMotorData();
+  }
 }
 
 void printMotorData(){
@@ -161,6 +185,5 @@ void printMotorData(){
     Serial.print(bitRead(motorData, i));
   }
   Serial.println();
-  Serial.println(motorData);
   Serial.println();
 }
