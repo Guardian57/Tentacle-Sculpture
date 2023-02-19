@@ -5,35 +5,36 @@ import cv2
 import mediapipe as mp
 
 
-# I have no idea what this does just leave it alone
-bus = SMBus(1)
-
-# This is the address we setup in the Arduino Program
-address = 0x8
-
-
 
 #cap = cv2.VideoCapture(0)
 
 class PoseReading:
-    mp_drawing = mp.solutions.drawing_utils
-    mp_pose = mp.solutions.pose
     
-    stage = ""        
-    right_wave = [-1, 0, 0]
-    left_wave = [-1, 0, 0]
-    is_waving = False
-    wave_time = 0
     
-    def __init__(self, uptime):
-        self.uptime = uptime
+    
+    def __init__(self):
+        self.uptime = time.perf_counter()
+        self.stage = ""        
+        self.right_wave = [-1, 0, 0]
+        self.left_wave = [-1, 0, 0]
+        self.is_waving = False
+        self.wave_time = 0
         
+        self.mp_drawing = mp.solutions.drawing_utils
+        self.mp_pose = mp.solutions.pose
+        
+        print("Pose Reader initialized")
     
-    def check_pose(cap):
+    def read_pose(self, cap):
+        with self.mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
+            
+            return cap
+        
+    def check_pose(self, cap):
         
         
         #Initiate holistic mdel
-        with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
+        with self.mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
             if cap.isOpened():
                 ret, frame = cap.read()
                 #cv2.imshow('Mediapipe Feed', frame)
@@ -75,11 +76,11 @@ class PoseReading:
                     
                     # saves each body part used in calculating poses
                     
-                    left_hip = [landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].x,landmarks[mp_pose.PoseLandmark.LEFT_HIP.value].y ]
-                    left_shoulder = [landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y ]
-                    left_elbow = [landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].x,landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].y ]
-                    left_wrist = [landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].x,landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].y ]
-                    left_pinky = [landmarks[mp_pose.PoseLandmark.LEFT_PINKY.value].x,landmarks[mp_pose.PoseLandmark.LEFT_PINKY.value].y ]
+                    left_hip = [landmarks[self.mp_pose.PoseLandmark.LEFT_HIP.value].x,landmarks[self.mp_pose.PoseLandmark.LEFT_HIP.value].y ]
+                    left_shoulder = [landmarks[self.mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,landmarks[self.mp_pose.PoseLandmark.LEFT_SHOULDER.value].y ]
+                    left_elbow = [landmarks[self.mp_pose.PoseLandmark.LEFT_ELBOW.value].x,landmarks[self.mp_pose.PoseLandmark.LEFT_ELBOW.value].y ]
+                    left_wrist = [landmarks[self.mp_pose.PoseLandmark.LEFT_WRIST.value].x,landmarks[self.mp_pose.PoseLandmark.LEFT_WRIST.value].y ]
+                    left_pinky = [landmarks[self.mp_pose.PoseLandmark.LEFT_PINKY.value].x,landmarks[self.mp_pose.PoseLandmark.LEFT_PINKY.value].y ]
                     
                     left_arm_angle = calculate_angle(left_hip, left_shoulder, left_elbow)
                     left_elbow_angle = calculate_angle(left_shoulder, left_elbow, left_wrist)
@@ -87,11 +88,11 @@ class PoseReading:
                     
                     left_angles = [left_arm_angle, left_elbow_angle, left_wrist_angle]
                     
-                    right_hip = [landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value].x,landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value].y ]
-                    right_shoulder = [landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value].x,landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value].y ]
-                    right_elbow = [landmarks[mp_pose.PoseLandmark.RIGHT_ELBOW.value].x,landmarks[mp_pose.PoseLandmark.RIGHT_ELBOW.value].y ]
-                    right_wrist = [landmarks[mp_pose.PoseLandmark.RIGHT_WRIST.value].x,landmarks[mp_pose.PoseLandmark.RIGHT_WRIST.value].y ]
-                    right_pinky = [landmarks[mp_pose.PoseLandmark.RIGHT_PINKY.value].x,landmarks[mp_pose.PoseLandmark.RIGHT_PINKY.value].y ]
+                    right_hip = [landmarks[self.mp_pose.PoseLandmark.RIGHT_HIP.value].x,landmarks[self.mp_pose.PoseLandmark.RIGHT_HIP.value].y ]
+                    right_shoulder = [landmarks[self.mp_pose.PoseLandmark.RIGHT_SHOULDER.value].x,landmarks[self.mp_pose.PoseLandmark.RIGHT_SHOULDER.value].y ]
+                    right_elbow = [landmarks[self.mp_pose.PoseLandmark.RIGHT_ELBOW.value].x,landmarks[self.mp_pose.PoseLandmark.RIGHT_ELBOW.value].y ]
+                    right_wrist = [landmarks[self.mp_pose.PoseLandmark.RIGHT_WRIST.value].x,landmarks[self.mp_pose.PoseLandmark.RIGHT_WRIST.value].y ]
+                    right_pinky = [landmarks[self.mp_pose.PoseLandmark.RIGHT_PINKY.value].x,landmarks[self.mp_pose.PoseLandmark.RIGHT_PINKY.value].y ]
                     
                     right_arm_angle = calculate_angle(right_hip, right_shoulder, right_elbow)
                     right_elbow_angle = calculate_angle(right_shoulder, right_elbow, right_wrist)
@@ -115,32 +116,32 @@ class PoseReading:
                         new_stage += "_rElUp" # right elbow up
                     
                     
-                    is_waving = (waving(right_wave, right_angles) or waving(left_wave, left_angles) or wave_time!=0)
+                    self.is_waving = (waving(self.right_wave, right_angles) or waving(self.left_wave, left_angles) or self.wave_time!=0)
                     
                     
-                    if is_waving == True and wave_time == 0:
+                    if self.is_waving == True and self.wave_time == 0:
                         
-                        wave_time = time.perf_counter()
+                        self.wave_time = time.perf_counter()
                         new_stage+= "_wave"
                     
                     
                     
-                    if time.perf_counter() - wave_time > 3 and is_waving == True:
+                    if time.perf_counter() - self.wave_time > 3 and self.is_waving == True:
                         try:
                             print("stop wave")
-                            is_waving = False
-                            wave_time = 0
+                            self.is_waving = False
+                            self.wave_time = 0
                             new_stage+= "_!waving"
                         except:
                             print("pose search error")
                     
                     
-                    if stage != new_stage: # checks if the current poses differ from the previously recorded ones
-                        if len(stage) > 1:
+                    if self.stage != new_stage: # checks if the current poses differ from the previously recorded ones
+                        if len(self.stage) > 1:
                             #print(new_stage)
                             pass
-                        write_data(new_stage)
-                        stage = new_stage
+                        #write_data(new_stage)
+                        self.stage = new_stage
                     
                     #drawAngles = [[leftArmAngle, leftShoulder]]
                     #visualize(drawAngles)
@@ -150,31 +151,9 @@ class PoseReading:
                     print("check_pose error")
                     # runs if a person or pose cannot be calculated
                     pass
+        
 
-                '''
-                #setup status box
-                #stage data            
-                cv2.rectangle(image, (0,0), (500, 73), (245, 117, 16), -1)
-                
-                cv2.putText(image, 'STAGE', (5, 12),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 1, cv2.LINE_AA)
-                cv2.putText(image, stage, (5, 60),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2, cv2.LINE_AA)
-
-
-                #draw face landmarks
-                mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS,
-                                        mp_drawing.DrawingSpec(color=(255,0,0),thickness=2, circle_radius=0),
-                                        mp_drawing.DrawingSpec(color=(255,0,0),thickness=2, circle_radius=2))
-             
-
-                cv2.imshow('Holistic Model Detections', image)
-
-                if cv2.waitKey(10) & 0xFF == ord('q'): # breaks out of loop if q is pressed
-                    break
-                '''
-
-    def calculate_angle(a, b, c): # calculates angle between three given points
+    def calculate_angle(self, a, b, c): # calculates angle between three given points
         a = np.array(a) #first
         b = np.array(b) #mid
         c = np.array(c) #end
@@ -187,7 +166,7 @@ class PoseReading:
 
         return angle
 
-    def calculate_angle_small(a, b, c): # calculates angle between three given points
+    def calculate_angle_small(self, a, b, c): # calculates angle between three given points
         a = np.array(a) #first
         b = np.array(b) #mid
         c = np.array(c) #end
@@ -198,13 +177,13 @@ class PoseReading:
 
         return angle
 
-    def waving(wave_list, angles):
+    def waving(self, wave_list, angles):
         #wave_list order: wave step, wave time, current state
         #angles order: arm elbow wrist
         timer_wait = 1.5
         wave_max = 5
         try:
-            elapsed_time = time.perf_counter() - uptime
+            elapsed_time = time.perf_counter() - self.uptime
             wrist_angle = angles[2] - 180
             #print("Arm: " + str(angles[0]))
             #print("Elbow: " + str(angles[1]))
@@ -269,31 +248,13 @@ class PoseReading:
             
         
 
-    def visualize(draw_angles):
+    def visualize(self, draw_angles):
         for i in range(len(draw_angles)):
             print(tuple(np.multiply(draw_angles[i][1], [1280, 720]).astype(int)))
             cv2.putText(image, str(draw_angles[i][0]),
                         tuple(np.multiply(draw_angles[i][1], [1280, 720]).astype(int)),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2, cv2.LINE_AA
                         )
-
-
-    # Arduino Communication
-
-    #http://www.raspberry-projects.com/pi/programming-in-python/i2c-programming-in-python/using-the-i2c-interface-2
-    # Sends data to the Arduino. Sends an array of 32 bytes
-    def write_data(value):
-        byte_value = string_to_bytes(value)    
-        bus.write_i2c_block_data(address,0x00,byte_value) #first byte is 0=command byte.. just is.
-        #print(byteValue)
-        return -1
-
-    # I didn't make this don't touch it, it's fine
-    def string_to_bytes(val):
-            ret_val = []
-            for c in val:
-                    ret_val.append(ord(c))
-            return ret_val
 
 
 

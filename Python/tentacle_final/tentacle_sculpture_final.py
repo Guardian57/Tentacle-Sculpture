@@ -1,13 +1,11 @@
 from smbus import SMBus
 import time
 import numpy as np
-#import cv2
 
-#from VideoGet import VideoGet
-#from VideoShow import VideoShow
+
+from VideoManager import VideoManager
 from Motor import Motor
 from AnimationMethods import AnimationMethods
-#from MpProcess import MpProcess
 
 class Tentacle:
 
@@ -22,29 +20,24 @@ class Tentacle:
         
         self.running = True
         
-        '''
-        self.cap = cv2.VideoCapture(0)
-
-
-        if process_frames:
-            self.video_process = MpProcess(0, video_getter.frame).start()
-
         
-        if show_video:
-            self.video_getter = VideoGet(0).start()
-            self.video_shower = VideoShow(video_getter.frame).start()
-            
+        
+        if self.process_frames:
+            self.video = VideoManager(self.show_video).start()
+            #self.video_getter = VideoGet(0).start()
+            #self.video_process = MpProcess(0, video_getter.frame).start()
+            pass
+
         '''
+        if self.show_video:
+            self.video_shower = VideoShow(self.video_getter.frame).start()
+           ''' 
+        
         # calibrates the motors
         motors = []
         
         for i in range(4):
-            value = ""
-            start_rot = 0
-            while(value == ""):
-                value = input("Please enter the starting rotation for motor " + str(i) + ": ")
-            start_rot = int(value)
-            motors.append(Motor(i, 180, start_rot))
+            motors.append(Motor(i, 180, 0))
         
         
         self.animation = AnimationMethods(self.addr, self.bus, motors)
@@ -55,7 +48,8 @@ class Tentacle:
             value = 0
             calibrated = False
             while calibrated == False:
-                value = int(input("Enter change to motor " + str(i) + ": "))
+                value = 0
+                #value = int(input("Enter change to motor " + str(i) + ": "))
                 if value == 0:
                     calibrated = True
                 else:
@@ -67,7 +61,7 @@ class Tentacle:
         print("calibration complete. starting program...")
         #TODO: home the motors to find their positions
 
-        self.animation.run_animation("animation3")
+        #self.animation.run_animation("test_animation")
         #exit()
         
         
@@ -75,18 +69,30 @@ class Tentacle:
 
     def main(self):
         while self.running:
-            if self.animation.get_moving() == False:
-                self.animation.run_animation("animation3")
-                pass
+            
             '''
-            if self.process_frames == True:
-                pass
-            if self.show_video == True:
-                pass
+            TO TEST ANIMATION
+            uncomment self.test_animation() and replace parameter in parenthesis with name of animation in quotation marks
+            comment out self.process_video()
+            this will loop the animation
+            
+            UNCOMMENT break() TO STOP ANIMATION FROM LOOPING
             '''
-        
+            #self.test_animation("test_animation")
+            self.process_video()
+            #break()
         pass
 
+    def test_animation(self, animation_name):
+        if self.animation.get_moving() == False:
+            self.animation.run_animation(animation_name)
+            pass
+    
+    def process_video(self):
+        if self.video.get_stopped():
+            self.running = False
+            self.animation.write_data("reset")
+            exit()
 
 
 tentacle = Tentacle()

@@ -21,13 +21,15 @@ class VideoGet():
 
     def get(self):
         while not self.stopped:
+            #if cv2.waitKey(1) == ord("q"):
+            #    self.stopped = True
+                
             if not self.grabbed:
                 self.stop()
             else:
                 (self.grabbed, self.frame) = self.stream.read()
-                #self.num = self.num + 1
-                #print(self.num)
-
+                cv2.resize(self.frame, (640, 480))
+                
     def stop(self):
         self.stopped = True
 
