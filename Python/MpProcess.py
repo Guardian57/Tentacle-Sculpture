@@ -105,9 +105,15 @@ class MpProcess:
                         
                         handPos = hand[0] * 640
                         
+                        motor_influence_one = map_range(motor_top_one, 0 , 180, 1 , 2)
+                        motor_influence_two = map_range(motor_top_two, 0 , 180, 1 , 2)
+                        
                         # the limits for the mapping function aftected by an influence value that is tied to the top motors positioning 
-                        motor_bot_one_limit = motor_top_one/2
-                        motor_bot_two_limit = 180 - motor_top_one
+                        motor_bot_one_limit = motor_top_one/motor_influence_one
+                        motor_bot_two_limit = 180 - (motor_top_one/motor_influence_two)
+                        
+                        print(motor_bot_one_limit)
+                        print(motor_bot_two_limit)
                         
                         motor_bot_one_map = map_range(handPos, minlim, maxlim, 0, motor_bot_one_limit) #mapping hand screen pos to 180 deg rotation. hand[] is multiplied by screen dimentions
                         motor_bot_two_map = map_range(handPos, minlim, maxlim, 180, motor_bot_two_limit)
