@@ -50,7 +50,7 @@ class MpProcess:
     
     def process (self):
         #Initiate holistic mdel
-        motor_top_one = 135;
+        motor_top_one = 180; #motors labeled one are on the same side. top and bottom controls. operators right viewers left
         motor_top_two = 0;
         
         maxlim = 540
@@ -105,26 +105,26 @@ class MpProcess:
                         
                         handPos = hand[0] * 640
                         
-                        motor_bot_one_map = map_range(handPos, minlim, maxlim, 0, largest_mpose_top) #mapping hand screen pos to 180 deg rotation. hand[] is multiplied by screen dimentions
-                        motor_bot_two_map = map_range(handPos, minlim, maxlim, 0, largest_mpose_top)
+                        # the limits for the mapping function aftected by an influence value that is tied to the top motors positioning 
+                        motor_bot_one_limit = motor_top_one/2
+                        motor_bot_two_limit = 180 - motor_top_one
                         
+                        motor_bot_one_map = map_range(handPos, minlim, maxlim, 0, motor_bot_one_limit) #mapping hand screen pos to 180 deg rotation. hand[] is multiplied by screen dimentions
+                        motor_bot_two_map = map_range(handPos, minlim, maxlim, 180, motor_bot_two_limit)
                         
-                        Motor_bot_one_clamped = clamp_number(motor_bot_one_map, 0, largest_mpose_top)
-                        Motor_bot_two_clamped = clamp_number(motor_bot_two_map, 0, largest_mpose_top)
+                        motor_bot_one_clamped = clamp_number(motor_bot_one_map, 0, motor_bot_one_limit)
+                        motor_bot_two_clamped = clamp_number(motor_bot_two_map, 180, motor_bot_two_limit)
                         
-                        motor_bot_one = int(Motor_bot_one_clamped)
+                        motor_bot_one = int(motor_bot_one_clamped)
                         
-                        motor_bot_two = motor_bot_one + (180 - largest_mpose_top) 
+                        motor_bot_two = int(motor_bot_two_clamped)
                         
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
-                        
+ 
+ 
+ 
+ 
+ 
+ 
                         if cmd_out == False:
                             cmd_out = True
                             print("cmd started ", format(cmd_out))
