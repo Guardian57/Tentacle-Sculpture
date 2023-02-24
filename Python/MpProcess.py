@@ -50,7 +50,7 @@ class MpProcess:
     
     def process (self):
         #Initiate holistic mdel
-        motor_top_one = 90;
+        motor_top_one = 180; #motors labeled one are on the same side. top and bottom controls. operators right viewers left
         motor_top_two = 0;
         
         maxlim = 540
@@ -100,30 +100,44 @@ class MpProcess:
                     hand = [landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].x, landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].y]
                     
                     if cmd_out == False:
-                    
-                        handPosToRot = map_range(hand[0] * 640, minlim, maxlim, 0, motor_top_one) #mapping hand screen pos to 180 deg rotation. hand[] is multiplied by screen dimentions
                         
-                        clamped = clamp_number(handPosToRot, 0, motor_top_one)
+                        largest_mpose_top = max(motor_top_one, motor_top_two)
                         
-                        hexClamp = int(clamped)
+                        handPos = hand[0] * 640
                         
-                        opp = motor_top_one - hexClamp
+                        motor_influence_one = map_range(motor_top_one, 0 , 180, 1 , 2)
+                        motor_influence_two = map_range(motor_top_two, 0 , 180, 1 , 2)
                         
+                        # the limits for the mapping function aftected by an influence value that is tied to the top motors positioning 
+                        motor_bot_one_limit = motor_top_one/motor_influence_one
+                        motor_bot_two_limit = 180 - (motor_top_one/motor_influence_two)
                         
+                        print(motor_bot_one_limit)
+                        print(motor_bot_two_limit)
                         
+                        motor_bot_one_map = map_range(handPos, minlim, maxlim, 0, motor_bot_one_limit) #mapping hand screen pos to 180 deg rotation. hand[] is multiplied by screen dimentions
+                        motor_bot_two_map = map_range(handPos, minlim, maxlim, 180, motor_bot_two_limit)
                         
+                        motor_bot_one_clamped = clamp_number(motor_bot_one_map, 0, motor_bot_one_limit)
+                        motor_bot_two_clamped = clamp_number(motor_bot_two_map, 180, motor_bot_two_limit)
                         
+                        motor_bot_one = int(motor_bot_one_clamped)
                         
+                        motor_bot_two = int(motor_bot_two_clamped)
                         
-                        
-                        
-                        
+ 
+ 
+ 
+ 
+ 
+ 
                         if cmd_out == False:
                             cmd_out = True
                             print("cmd started ", format(cmd_out))
-                            val_when_enter = hexClamp
-                            print("runs")
-                            bus.write_i2c_block_data(addr,0x07,[hexClamp,hexClamp])
+                            val_when_enter = motor_bot_one
+                            print('Motor_bottom_one: ', motor_bot_one)
+                            print('Motor_bottom_one: ', motor_bot_two)
+                            bus.write_i2c_block_data(addr,0x07,[motor_bot_one, motor_bot_two])
                             
                     elif cmd_out == True:
                         status = bus.read_byte(addr)
