@@ -116,10 +116,10 @@ class MpProcess:
                         print(motor_bot_two_limit)
                         
                         motor_bot_one_map = map_range(handPos, minlim, maxlim, 0, motor_bot_one_limit) #mapping hand screen pos to 180 deg rotation. hand[] is multiplied by screen dimentions
-                        motor_bot_two_map = map_range(handPos, minlim, maxlim, 180, motor_bot_two_limit)
+                        motor_bot_two_map = map_range(handPos, minlim, maxlim, motor_bot_two_limit, 180)
                         
                         motor_bot_one_clamped = clamp_number(motor_bot_one_map, 0, motor_bot_one_limit)
-                        motor_bot_two_clamped = clamp_number(motor_bot_two_map, 180, motor_bot_two_limit)
+                        motor_bot_two_clamped = clamp_number(motor_bot_two_map, motor_bot_two_limit, 180)
                         
                         motor_bot_one = int(motor_bot_one_clamped)
                         
