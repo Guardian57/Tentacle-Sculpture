@@ -8,6 +8,11 @@
 
 #define M_NUM 4 //number of motors being driven
 
+#define CW_BUTT 4
+#define CCW_BUTT 5
+#define MOTOR_TOGGLE 3
+
+
 // Defin pins
 
 
@@ -62,10 +67,10 @@ void setup() {
   }
 
   //sets button pinMode
-  pinMode (5, INPUT);
-  pinMode (4, INPUT);
   
-  pinMode (3, INPUT);
+  pinMode (CW_BUTT, INPUT);
+  pinMode (CCW_BUTT, INPUT);
+  pinMode (MOTOR_TOGGLE, INPUT);
   
   
   
@@ -172,7 +177,7 @@ void loop() {
     
     
 
-    if(digitalRead(3)==HIGH and isPress == false){
+    if(digitalRead(MOTOR_TOGGLE)==HIGH and isPress == false){ //switch motors for manual control
         cntrM = (cntrM + 1) % M_NUM;
         Serial.println("controlling Motor " + String(cntrM));
         isPress = true;
@@ -182,14 +187,14 @@ void loop() {
     
     
     
-    if(digitalRead(4)==HIGH){
+    if(digitalRead(CW_BUTT)==HIGH){ //manual control CW
         
         stepper[cntrM].move(mSteps);
         //Serial.println("go");
         
      }
 
-     if(digitalRead(5)==HIGH){
+     if(digitalRead(CCW_BUTT)==HIGH){ //manual control CCW
         
         stepper[cntrM].move(-mSteps);
      }
@@ -197,7 +202,7 @@ void loop() {
      if(manualCntr){
         stepper[cntrM].run();
      }
-     else {
+     else { 
         for(int i = 0; i < M_NUM; i++) {
         stepper[i].run();
 
