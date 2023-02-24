@@ -50,7 +50,7 @@ class MpProcess:
     
     def process (self):
         #Initiate holistic mdel
-        motor_top_one = 180; #motors labeled one are on the same side. top and bottom controls. operators right viewers left
+        motor_top_one = 0; #motors labeled one are on the same side. top and bottom controls. operators right viewers left
         motor_top_two = 0;
         
         maxlim = 540
@@ -101,25 +101,27 @@ class MpProcess:
                     
                     if cmd_out == False:
                         
-                        largest_mpose_top = max(motor_top_one, motor_top_two)
                         
                         handPos = hand[0] * 640
                         
-                        motor_influence_one = map_range(motor_top_one, 0 , 180, 1 , 2)
-                        motor_influence_two = map_range(motor_top_two, 0 , 180, 1 , 2)
+                        motor_influence_one = map_range(motor_top_one, 0 , 180, 1 , 0.5)
+                        motor_influence_two = map_range(motor_top_two, 0 , 180, 1 , 0.5)
+                        
+                        print('influence 1: ',motor_influence_one)
+                        print('influence 2: ',motor_influence_two)
                         
                         # the limits for the mapping function aftected by an influence value that is tied to the top motors positioning 
-                        motor_bot_one_limit = motor_top_one/motor_influence_one
-                        motor_bot_two_limit = 180 - (motor_top_one/motor_influence_two)
+                        motor_bot_one_limit = 180 * motor_influence_one
+                        motor_bot_two_limit = 180 * motor_influence_two
                         
                         print(motor_bot_one_limit)
                         print(motor_bot_two_limit)
                         
                         motor_bot_one_map = map_range(handPos, minlim, maxlim, 0, motor_bot_one_limit) #mapping hand screen pos to 180 deg rotation. hand[] is multiplied by screen dimentions
-                        motor_bot_two_map = map_range(handPos, minlim, maxlim, motor_bot_two_limit, 180)
+                        motor_bot_two_map = map_range(handPos, minlim, maxlim, 0, motor_bot_two_limit)
                         
                         motor_bot_one_clamped = clamp_number(motor_bot_one_map, 0, motor_bot_one_limit)
-                        motor_bot_two_clamped = clamp_number(motor_bot_two_map, motor_bot_two_limit, 180)
+                        motor_bot_two_clamped = clamp_number(motor_bot_two_map, 0, motor_bot_two_limit)
                         
                         motor_bot_one = int(motor_bot_one_clamped)
                         
@@ -136,7 +138,7 @@ class MpProcess:
                             print("cmd started ", format(cmd_out))
                             val_when_enter = motor_bot_one
                             print('Motor_bottom_one: ', motor_bot_one)
-                            print('Motor_bottom_one: ', motor_bot_two)
+                            print('Motor_bottom_two: ', motor_bot_two)
                             bus.write_i2c_block_data(addr,0x07,[motor_bot_one, motor_bot_two])
                             
                     elif cmd_out == True:
