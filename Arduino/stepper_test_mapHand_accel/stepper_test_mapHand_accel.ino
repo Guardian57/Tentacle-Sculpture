@@ -6,27 +6,30 @@
 #include <AccelStepper.h>
 #include <MultiStepper.h>
 
-#define M_NUM 2 //number of motors being driven
+#define M_NUM 4 //number of motors being driven
 
 // Defin pins
 
-int reverseSwitch = 2;  // Push button for reverse
-int driverPUL = 7;    // PUL- pin
-int driverDIR = 6;
 
 
-const int stepperPins[][2] = {{7, 6},
-                              {12, 11}
+const int stepperPins[][2] = {{6, 7},
+                              {8, 9},
+                              {10, 11},                          
+                              {12, 13}
                              }; // (address, PUL, DIR)
 
 int stepperInfo[][3] = {{700, 100, 0},
                         {700, 100, 0},
-                        {700, 100, 0}                     
+                        {700, 100, 0},
+                        {700, 100, 0}                   
                       }; //(maxSpeed, acceleration, target pos (degrees))
+
 long positions[M_NUM];
 
 
-int ppr = 3000; //pulse per revolution based on stepper driver
+int ppr = 200; //pulse per revolution based on stepper driver
+int mSteps = 1; //amout of steps to move based on ppr. default 1
+float pulseDeg = 1.8;
 boolean isProcessing = false;
 
 //Stepper handlers
@@ -59,9 +62,9 @@ void setup() {
   }
 
   //sets button pinMode
-  pinMode (8, INPUT);
+  pinMode (5, INPUT);
   pinMode (4, INPUT);
-  pinMode (2, INPUT);
+  
   pinMode (3, INPUT);
   
   
@@ -71,8 +74,8 @@ void setup() {
   Wire.onReceive(receiveEvent);
   Wire.onRequest(sendState); 
 
-  
-  
+  pulseDeg = 360.0f/ppr;
+  mSteps = pulseDeg*100;
 }
 
 void receiveEvent(int howMany) {
@@ -177,21 +180,18 @@ void loop() {
           isPress = false;
         }
     
-    if(digitalRead(2)==LOW){
-        //insert
-        setShaftPos( 0, 0);
-    }
+    
     
     if(digitalRead(4)==HIGH){
-       
-        stepper[cntrM].move(50);
+        
+        stepper[cntrM].move(mSteps);
         //Serial.println("go");
         
      }
 
-     if(digitalRead(8)==HIGH){
+     if(digitalRead(5)==HIGH){
         
-        stepper[cntrM].move(-50);
+        stepper[cntrM].move(-mSteps);
      }
 
      if(manualCntr){
