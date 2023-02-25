@@ -1,10 +1,6 @@
 from smbus import SMBus
 import time
 import numpy as np
-import cv2
-import mediapipe as mp
-
-
 
 #cap = cv2.VideoCapture(0)
 
@@ -20,15 +16,10 @@ class PoseReading:
         self.is_waving = False
         self.wave_time = 0
         
-        self.mp_drawing = mp.solutions.drawing_utils
-        self.mp_pose = mp.solutions.pose
-        
         print("Pose Reader initialized")
     
     def read_pose(self, cap):
-        with self.mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
-            
-            return cap
+        pass
         
     def check_pose(self, cap):
         
@@ -55,24 +46,7 @@ class PoseReading:
                 try:
                     landmarks = results.pose_landmarks.landmark
                     
-                    #get landmark coordinates of body parts
-                    '''
-                        Options for Body Parts: 
-                        
-                        0: NOSE
-                        1: LEFT_EYE_INNER | 2: LEFT_EYE | 3: LEFT_EYE_OUTER
-                        4: RIGHT_EYE_INNER | 5: RIGHT_EYE | 6: RIGHT_EYE_OUTER
-                        7: LEFT_EAR | 8: RIGHT_EAR
-                        9: MOUTH_LEFT | 10: MOUTH_RIGHT
-                        11: LEFT_SHOULDER | 13: LEFT_ELBOW | 15: LEFT_WRIST
-                        12: RIGHT_SHOULDER | 14: RIGHT_ELBOW | 16: RIGHT_WRIST
-                        17: LEFT_PINKY | 19: LEFT_INDEX | 21: LEFT_THUMB
-                        18: RIGHT_PINKY | 20: RIGHT_INDEX | 22: RIGHT_THUMB
-                        23: LEFT_HIP | 24: RIGHT_HIP | 25: LEFT_KNEE | 26: RIGHT_KNEE
-                        27: LEFT_ANKLE | 29: LEFT_HEEL | 31: LEFT_FOOT_INDEX
-                        28: RIGHT_ANKLE | 30: RIGHT_HEEL | 32: RIGHT_FOOT_INDEX
-                        
-                    '''
+                    
                     
                     # saves each body part used in calculating poses
                     

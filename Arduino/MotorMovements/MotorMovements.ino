@@ -16,10 +16,10 @@ const int stepperPins[][2] = {
   {12, 13}
 }; // (address, PUL, DIR)
 
-int stepperInfo[][3] = {{1500, 1200, 0},
-                        {1500, 1200, 0},
-                        {700, 100, 0},
-                        {700, 100, 0}                   
+int stepperInfo[][3] = {{1500, 700, 0},
+                        {1500, 700, 0},
+                        {1500, 700, 0},
+                        {1500, 700, 0}                   
                       }; //(maxSpeed, acceleration, target pos (degrees))
                       
 long positions[] = {0, 0, 0, 0};
