@@ -50,8 +50,8 @@ class MpProcess:
     
     def process (self):
         #Initiate holistic mdel
-        motor_top_one = 0; #motors labeled one are on the same side. top and bottom controls. operators right viewers left
-        motor_top_two = 0;
+        motor_top_one = 180; #motors labeled one are on the same side. top and bottom controls. operators right viewers left
+        motor_top_two = 180;
         
         maxlim = 540
         minlim = 100
@@ -101,9 +101,10 @@ class MpProcess:
                     
                     if cmd_out == False:
                         
+                        #position of the hand
+                        handPos = hand[0] * 640 #multiplied by screen dimentions
                         
-                        handPos = hand[0] * 640
-                        
+                        #determins the influence the top motors have over the bottom motors position based on top motors position. 180 Deg = range of motion, 0 Deg = full range of motion
                         motor_influence_one = map_range(motor_top_one, 0 , 180, 1 , 0.5)
                         motor_influence_two = map_range(motor_top_two, 0 , 180, 1 , 0.5)
                         
@@ -117,14 +118,15 @@ class MpProcess:
                         print(motor_bot_one_limit)
                         print(motor_bot_two_limit)
                         
-                        motor_bot_one_map = map_range(handPos, minlim, maxlim, 0, motor_bot_one_limit) #mapping hand screen pos to 180 deg rotation. hand[] is multiplied by screen dimentions
-                        motor_bot_two_map = map_range(handPos, minlim, maxlim, 0, motor_bot_two_limit)
+                        #mapping the hand position to the motor range with limits applied
+                        motor_bot_one_map = map_range(handPos, minlim, maxlim, 0, motor_bot_one_limit) #mapping hand screen pos to 180 deg rotation. 
+                        motor_bot_two_map = map_range(handPos, minlim, maxlim, 180 - motor_bot_two_limit, 180) #reverses the direction of the motor by changing the upper limit to a lower limit (subtracting 180) and mapping it backwards
                         
+                        #making sure motor position does not go past limits
                         motor_bot_one_clamped = clamp_number(motor_bot_one_map, 0, motor_bot_one_limit)
-                        motor_bot_two_clamped = clamp_number(motor_bot_two_map, 0, motor_bot_two_limit)
+                        motor_bot_two_clamped = clamp_number(motor_bot_two_map, 180 - motor_bot_two_limit, 180)
                         
                         motor_bot_one = int(motor_bot_one_clamped)
-                        
                         motor_bot_two = int(motor_bot_two_clamped)
                         
  
