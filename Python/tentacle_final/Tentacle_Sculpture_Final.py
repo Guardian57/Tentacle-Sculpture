@@ -4,7 +4,6 @@ import numpy as np
 
 
 from VideoManager import VideoManager
-from Motor import Motor
 from AnimationMethods import AnimationMethods
 from PoseReader import PoseReader
 
@@ -21,6 +20,8 @@ class Tentacle:
         self.process_frames = True
         
         self.running = True
+        
+        self.targets = [0, 0, 0, 0]
         
         self.idle_cooldown = 10
         self.idle_timer = 0
@@ -41,17 +42,13 @@ class Tentacle:
         
         
         #self.animation.run_animation("motor_test")
+        #self.animation.run_animation("test_animation")
         #exit()
 
       
     def calibrate_motors(self):
-        self.motors = []
         
-        for i in range(4):
-            self.motors.append(Motor(i, 180, 0))
-        
-        
-        self.animation = AnimationMethods(self.addr, self.bus, self.motors)
+        self.animation = AnimationMethods(self.addr, self.bus)
         
         print("Starting manual calibration")
         
@@ -62,16 +59,24 @@ class Tentacle:
                 value = int(input("Enter change to motor " + str(i) + ": "))
                 if value == 0:
                     calibrated = True
+                elif value < 0:
+                    value = 0
+                    self.targets[i] = value
+                    self.animation.write_data(self.targets)
                 else:
                     # change this to new format for commands
-                    command = str(i) + "_" + str(value)
-                    self.animation.write_data(command)
+                    self.targets[i] = value
+                    self.animation.write_data(self.targets)
         # change this to new format for reset command if applicable
-        self.animation.write_data("reset")
+        
+        self.animation.write_data([0, 0, 0, 0,  1])
+        self.animation.stall()
         print("calibration complete. starting program...")
         print()
 
-    
+        self.test_animation("test_animation")
+        self.animation.run_animation("return_to_zero")
+        
 
 
     def main(self):
@@ -83,12 +88,12 @@ class Tentacle:
             comment out self.process_video()
             this will loop the animation
             
-            UNCOMMENT break() TO STOP ANIMATION FROM LOOPING
+            UNCOMMENT break TO STOP ANIMATION FROM LOOPING
             '''
-            #self.test_animation("test_animation")
+            self.test_animation("test_animation")
             
-            self.process_video()
-            #break()
+            #self.process_video()
+            #break
         pass
 
     def test_animation(self, animation_name):
@@ -103,7 +108,8 @@ class Tentacle:
                 self.idle_timer == time.perf_counter() + self.idle_cooldown
                 self.idle = True
             elif time.perf_counter() >= self.idle_timer:
-                self.animation.run_animation("idle_twitch")
+                self.animation.run_animation("return_to_zero")
+                #self.animation.run_animation("idle_twitch")
                 self.idle_timer == time.perf_counter()+self.idle_cooldown
         else:
             if self.idle:
@@ -112,12 +118,21 @@ class Tentacle:
                 print("Tracking Person!")
             
             if self.video.model_present:
-                self.reader.read_pose(self.video.get_landmarks())
-            
+                new_targets = self.reader.read_pose(self.video.get_landmarks())
+                #print(str(new_targets) + "|||" + str(self.targets))
+                if not new_targets == self.targets:
+                    self.targets = new_targets[:]
+                    print(self.targets)
+                    while True:
+                        try:
+                            self.animation.write_data(targets);
+                            break
+                        except:
+                            pass                    
             
         if self.video.get_stopped():
             self.running = False
-            #self.animation.write_data("reset")
+            self.animation.run_animation("return_to_zero")
             exit()
       
     

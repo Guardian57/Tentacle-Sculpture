@@ -59,23 +59,31 @@ class VideoManager:
                     # detecting whether to switch off idle mode when a model is present
                     # code will except before reaching this point if no model is available
                     # this is to prevent a single, brief glitch from interrupting idle mode
-                    if self.idle == True and self.model_present == False:
-                        print("Model Present, waiting for confirmation to cancel idle")
-                        self.model_timer = time.perf_counter()+self.model_trigger
-                        self.model_present = True
                     
-                    elif time.perf_counter()>=self.model_timer and self.idle == True:
+                    if self.idle == True and self.model_present == False: # if idle with no model
+                        print("Model Present, waiting for confirmation to cancel idle")
+                        self.model_timer = time.perf_counter()+self.model_trigger # target for the timer
+                        self.model_present = True # there is now a model
+                        
+                    
+                    elif time.perf_counter()>=self.model_timer and self.idle: # model is available to stop idle
                         self.idle = False
+                        self.model_present = True
                         print("Model Present, tracking data ready")
+                    
+                    elif self.idle == False and self.model_present == False:
+                        print("Model found again, cancelling idle timer")
+                        self.model_present = True
+                        
                     
                 except:
                     
                     # setting timers to detect whether to switch to idle mode
                     # code wants to go a certain gap of time without a model present before idling
-                    if self.model_present and self.idle == False:
+                    if self.model_present and self.idle == False: # if model is present but not idling
                         print("Start Idle Timer")
                         self.model_present = False
-                        self.idle_timer = time.perf_counter() + self.idle_trigger
+                        self.idle_timer = time.perf_counter() + self.idle_trigger # setting the idle timer
                     
                     elif time.perf_counter() >= self.idle_timer and self.idle == False:
                         self.idle = True
@@ -150,8 +158,8 @@ class VideoManager:
         self.mp_drawing.draw_landmarks(image, results.pose_landmarks, self.mp_pose.POSE_CONNECTIONS,
                                     self.mp_drawing.DrawingSpec(color=(255,0,0),thickness=2, circle_radius=0),
                                     self.mp_drawing.DrawingSpec(color=(255,0,0),thickness=2, circle_radius=2))
-
-        cv2.imshow('Holistic Model Detections', image)
+        image_small = cv2.resize(image, (640, 480))
+        cv2.imshow('Holistic Model Detections', image_small)
 
     def get_stopped(self):
         return self.stopped

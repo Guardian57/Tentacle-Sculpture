@@ -9,8 +9,9 @@ class PoseReader:
     
     
     def __init__(self):
-        #self.stage = ""
+
         self.tracking = False
+        self.targets = [0, 0, 0, 0]
         
         # sets up variables necessary for individual pose checks. split into functions for organization
         self.set_target()
@@ -21,7 +22,12 @@ class PoseReader:
     
     
     def set_target(self):
-        self.priority_limb = "head"
+        # 0: head, 1: left arm, 2: right arm
+        self.priority_limb = 0
+        self.x_prev = 0
+        self.y_prev = 0
+        self.x_head = 50
+        self.y_head = 50
         
     
     def set_wave(self):
@@ -60,16 +66,80 @@ class PoseReader:
             self.uptime = time.perf_counter()
             self.tracking = True
             print("Reading Pose!")
+            
         
+        self.find_head(landmarks[0])
+        self.track_priority(landmarks[self.priority_limb])
         
-        #self.is_waving = (waving(self.right_wave, right_angles) or waving(self.left_wave, left_angles) or self.wave_time!=0)
-        #print("waving: " + str(self.is_waving))
+        #self.is_waving = (self.waving(self.right_wave, right_angles) or self.waving(self.left_wave, left_angles) or self.wave_time!=0)
+        
+        return self.targets
     
+    def find_head(self, landmarks):
+        self.x_head = int(landmarks[0]*100)
+        self.y_head = int(landmarks[1]*100)
+    
+    def track_priority(self, landmarks):
+        x = int(landmarks[0]*100)
+        y = int(landmarks[1]*100)
+        self.pos_to_rot(x, y)
+        
+        pass
+          
+    
+    # translates a target x and y into a rough rotation array
+    def pos_to_rot(self, x, y):
+        
+        increment_to_change = 5 # required amount of change for the command to be changed
+        changing = False
+        
+        x_scale = 12 # how much one point of change in the x value equals in rotation angle
+        y_scale = 2 # how much one point of change in the y value equals in rotation angle
+        
+        x_mid = self.x_head
+        y_mid = 100-self.y_head
+        
+        x_prev = self.x_prev
+        y_prev = self.y_prev
+        
+        # HEAD TRACKING
+        
+        if abs(x_mid-x_prev) >= increment_to_change:
+            x_prev = x_mid
+            changing = True
+        
+        if abs(y_mid-y_prev) >= increment_to_change:
+            y_prev = y_mid
+            changing = True
+        
+        if changing:
+            self.targets[2] = y_mid*y_scale
+            self.targets[3] = y_mid*y_scale
+            
+            '''
+            #adjusting y through simultaneous change
+            
+            
+            y_flip = 100-y # this is to flip numbers so that y gets larger when moving up
+                        
+            self.targets[0] = y_flip
+            self.targets[1] = y_flip
+            self.targets[2] = y_mid*y_scale
+            self.targets[3] = y_mid*y_scale
+            #print(str(x) + " " + str(y) + " --> " + str(self.targets[0]) + " " + str(self.targets[1]))
+        
+            left_change = x_mid-x
+            right_change = x-x_mid
+            self.targets[0] = max(0, self.targets[0]+right_change)
+            self.targets[1] = max(0, self.targets[1]+left_change)
+            print(str(self.targets[0]) + " " + str(self.targets[1]))
+            '''
+        
     
     
     def create_joint_angles(self, landmarks):
         '''
-            arm landmark order:
+            landmark order:
                 0: hip
                 1: shoulder
                 2: elbow
@@ -120,7 +190,10 @@ class PoseReader:
 
         return angle
 
-    '''
+    
+     
+    
+    # Wave animation. program currently lags too much to use in its current state. needs overhaul
     def waving(self, wave_list, angles):
         #wave_list order: wave step, wave time, current state
         #angles order: arm elbow wrist
@@ -189,65 +262,5 @@ class PoseReader:
             print("wave error")
         return False
 
-            '''
-    
-    
-    '''
-    def read_pose(self, cap):
-        pass
-                     
-                    # 50 is about arm up
-                    # 90 is about elbow up
-                    
-                    
-                    new_stage = ""
-                    
-                    if left_arm_angle > 50:
-                        new_stage += "_lArUp" # left arm up
-                    if right_arm_angle > 50:
-                        new_stage += "_rArUp" # right arm up
-                    if left_elbow_angle < 90:
-                        new_stage += "_lElUp" # left elbow up
-                    if right_elbow_angle < 90:
-                        new_stage += "_rElUp" # right elbow up
-                    
-                    
-                    self.is_waving = (waving(self.right_wave, right_angles) or waving(self.left_wave, left_angles) or self.wave_time!=0)
-                    
-                    
-                    if self.is_waving == True and self.wave_time == 0:
-                        
-                        self.wave_time = time.perf_counter()
-                        new_stage+= "_wave"
-                    
-                    
-                    
-                    if time.perf_counter() - self.wave_time > 3 and self.is_waving == True:
-                        try:
-                            print("stop wave")
-                            self.is_waving = False
-                            self.wave_time = 0
-                            new_stage+= "_!waving"
-                        except:
-                            print("pose search error")
-                    
-                    
-                    if self.stage != new_stage: # checks if the current poses differ from the previously recorded ones
-                        if len(self.stage) > 1:
-                            #print(new_stage)
-                            pass
-                        #write_data(new_stage)
-                        self.stage = new_stage
-                    
-                    #drawAngles = [[leftArmAngle, leftShoulder]]
-                    #visualize(drawAngles)
-                    
-                    
-                except:
-                    print("check_pose error")
-                    # runs if a person or pose cannot be calculated
-                    pass
-        
-    '''
-
+         
 

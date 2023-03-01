@@ -36,8 +36,7 @@ byte motorData = 0;
 
 // variables for reading data from pi
 String str = "";
-int data[32];
-int motorInfo[M_NUM];
+char chars[32];
 volatile boolean receiveFlag = false;
 
 boolean moving = false;
@@ -74,7 +73,7 @@ void loop() {
 
   // checks for message from pi
   if (receiveFlag == true) {
-    parseCommand(); // parses new string for commands
+    parseString(str); // parses new string for commands
     receiveFlag = false;
   }
 
@@ -93,18 +92,22 @@ void loop() {
 
 void receiveEvent(int howMany){ // took this off the interwebs. gets a string command from the pi
   for(int i = 0; i < 32; i++){
-    data[i] = '\0';
-    
-    
-  }
+    chars[i] = '\0';
   
-  Serial.print(String(howMany) + " received: ");
-  for(int i = 0; i < howMany;i++){
-    data[i] = Wire.read();
-    Serial.print(String(data[i]) + "_");
   }
-  Serial.println();
+  for (int i = 0; i < howMany; i++) {
+    
+    chars[i] = Wire.read();
+    chars[i + 1] = '\0'; //add null after ea. char
+  } 
+
+  for (int i = 0; i < howMany; ++i)
+    chars[i] = chars[i + 1];
+
+  str = chars; // probs don't need this but it's here in case we do
   
+  Serial.println("received: " + str);
+
   receiveFlag = true;
 
 }
@@ -116,10 +119,20 @@ void sendData()
 }
 
 
-void parseCommand(){ 
-
-  if(data[5] == 1){
+void parseString(String cmd){ 
+  
+  if(cmd.indexOf("_") >= 0){
     
+    int motorNum = cmd.substring(0, 1).toInt();
+    int targetNum = cmd.substring(2, cmd.length()).toInt();
+    //Serial.println(String(motorNum) + "_" + String(targetNum));
+    stepperInfo[motorNum][2] = targetNum;
+    pulse(motorNum, targetNum);
+    
+    
+  }
+
+  if(cmd.indexOf("reset")>= 0){
     Serial.println("Reset pog");
     for (int i = 0; i < M_NUM; i++) {
       //rotate calibrate celebrate
@@ -128,17 +141,11 @@ void parseCommand(){
       
     }
   }
-  else{
-    
-    for(int i = 0; i < M_NUM; i++){
-      Serial.println(data[i+1]);
-      int target = map(data[i+1], 0, 255, 0, 360); // plus is because arduino is bad and i am bad
-      stepperInfo[i][2] = target;
-      pulse(i, target);
-    }
+
+  if(cmd.indexOf("finish")>= 0){
+    moving = true;
   }
-  
-  
+
 }
 
 void pulse(int stpr, int deg){
@@ -151,7 +158,7 @@ void pulse(int stpr, int deg){
       long pulsePositions[M_NUM];
       
       bitWrite(motorData, stpr, 1);
-      //printMotorData();
+      printMotorData();
       stepper[stpr].moveTo(positions[stpr]/pulseDeg);
       
       
@@ -169,7 +176,7 @@ void updateMotorData(){
     }
   }
   if(oldData != motorData){
-  printMotorData();
+  //printMotorData();
   }
 }
 

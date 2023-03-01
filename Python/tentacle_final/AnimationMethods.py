@@ -1,36 +1,32 @@
 from smbus import SMBus
 from configparser import ConfigParser
 import time
-from Motor import Motor
+
 
 
 class AnimationMethods:
     
     moving = False
     
-    def __init__ (self, address, bus, motors):
+    def __init__ (self, address, bus):
         self.address = address
         self.bus = SMBus(1)
         
-        self.motors = motors # aray of motors
+        
         self.motor_count = 4 # number of motors
         self.maximum_angle = 180 # maximum angle motors can turn
-        
+        self.targets = [0,0,0,0]
         
         self.step = 0 # which step of the animation we are on
         self.uptime = time.perf_counter() # the time the program started running
         self.delay = 0 # the delay between commands
         self.current_time = 0
         
-        for i in range(len(motors)): # resetting all motors to 0
-            
-            self.write_data(str(i)+"_"+str(motors[i].get_position()*-1)) # writing motor data
-            motors[i].set_position(0) # 
-            time.sleep(.1) # small delay to improve stability
-            
+        self.write_data(self.targets) # writing motor data
         
         self.stall() # a stall to make sure all calibrations are done
-        self.write_data("reset"); # a reset command to set the new zeroes for the motor
+        time.sleep(.1)
+        #self.write_data([0, 0, 0, 0, 1]); # a reset command to set the new zeroes for the motor
         print("Animations Ready")
 
 
@@ -62,7 +58,7 @@ class AnimationMethods:
 
         commands = command.split(" ") # splits the commands into multiple steps
         print(commands)
-        print("Starting Animation: " + command)
+        print("Starting Animation: " + animation)
         print()
         
         
@@ -78,13 +74,15 @@ class AnimationMethods:
                         
                         command_pieces = commands[self.step].split("_") # splits the current command into its smaller parts
                         if delay_between_movements: # triggers to wait until command can be executed
-                            self.stall()
-                        print(command_pieces)
+                            self.stall() # stalls the program until the motors are done moving
+                        print(command_pieces) 
                         motor_num = command_pieces[0]
                         new_target = command_pieces[1]
                         
+                        self.targets[int(motor_num)] = int(new_target)
                         
-                        self.write_data(motor_num+"_"+new_target) # writes the command
+                        self.write_data(self.targets) # writes the command
+                        #self.write_data(motor_num+"_"+new_target) # writes the command
                       
                         check_delay = command_pieces[2] # checks if there is a delay
                         if check_delay == "*": # asterisk means next command should trigger immediately
@@ -101,15 +99,14 @@ class AnimationMethods:
                     
                         
                     except:
-                        pass
+                        print("animation error")
                     
                     
                 
         self.moving = False # the animation is complete
         print()
         
-
-    # I didn't make this don't touch it, it's fine
+    # I didn't make this don't touch it, it's fine. used in old version of program
     def string_to_bytes(self, val):
         ret_val = []
         for c in val:
@@ -118,13 +115,9 @@ class AnimationMethods:
 
 
     def write_data(self, value): # writes the command to the arduino
-        byte_value = self.string_to_bytes(value)
-        
-        self.bus.write_i2c_block_data(self.address,0x00,byte_value) #first byte is 0=command byte.. just is.
-        #print("Byte value!")
-        print("to Arduino: " + value)
-        #print(byte_value)
-        print()
+        #byte_value = self.string_to_bytes(value) # used in old version
+        self.bus.write_i2c_block_data(self.address,0x00,value) #first byte is 0=command byte.. just is.
+        print("to Arduino: " + str(value))
         return -1
 
     
