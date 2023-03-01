@@ -104,21 +104,23 @@ class MpProcess:
                         #position of the hand
                         handPos = hand[0] * 640 #multiplied by screen dimentions
                         
-                        motor_top_one_map = map_range(handPos, minlim, maxlim, 0, 180)
-                        motor_top_two_map = map_range(handPos, minlim, maxlim, 180, 0)
+                        motor_top_one_map = map_range(handPos, minlim, maxlim, 180, 0)
+                        motor_top_two_map = map_range(handPos, minlim, maxlim, 0, 180)
                         
-                        motor_top_one_clamped = clamp_number(motor_top_one_map, 0, 180)
-                        motor_top_two_clamped = clamp_number(motor_top_two_map, 180, 0)
+                        motor_top_one_clamped = clamp_number(motor_top_one_map, 180, 0)
+                        motor_top_two_clamped = clamp_number(motor_top_two_map, 0, 180)
                         
                         motor_top_one = int(motor_top_one_clamped)
                         motor_top_two = int(motor_top_two_clamped)
+                        
+                        
                         
                         print("Top Motor 01 pos: ",motor_top_one)
                         print("Top Motor 02 pos: ",motor_top_two)
                         
                         #determins the influence the top motors have over the bottom motors position based on top motors position. 180 Deg = range of motion, 0 Deg = full range of motion
-                        motor_influence_one = map_range(motor_top_one, 0 , 180, 1 , 0.5)
-                        motor_influence_two = map_range(motor_top_two, 0 , 180, 1 , 0.5)
+                        motor_influence_one = map_range(motor_top_one, 0 , 180, 0.5, 1)
+                        motor_influence_two = map_range(motor_top_two, 0 , 180, 0.5, 1)
                         
                         print('influence 1: ',motor_influence_one)
                         print('influence 2: ',motor_influence_two)
@@ -128,18 +130,18 @@ class MpProcess:
                         motor_bot_two_limit = 180 * motor_influence_two
                             
                         #mapping the hand position to the motor range with limits applied
-                        motor_bot_one_map = map_range(handPos, minlim, maxlim, 0, motor_bot_one_limit) #mapping hand screen pos to 180 deg rotation. 
+                        motor_bot_one_map = map_range(handPos, minlim, maxlim, 180, 180 - motor_bot_one_limit) #mapping hand screen pos to 180 deg rotation. 
                         motor_bot_two_map = map_range(handPos, minlim, maxlim, 180 - motor_bot_two_limit, 180) #reverses the direction of the motor by changing the upper limit to a lower limit (subtracting 180) and mapping it backwards
                         
                         #making sure motor position does not go past limits
-                        motor_bot_one_clamped = clamp_number(motor_bot_one_map, 0, motor_bot_one_limit)
+                        motor_bot_one_clamped = clamp_number(motor_bot_one_map, 180, 180 - motor_bot_one_limit)
                         motor_bot_two_clamped = clamp_number(motor_bot_two_map, 180 - motor_bot_two_limit, 180)
                         
                         motor_bot_one = int(motor_bot_one_clamped)
                         motor_bot_two = int(motor_bot_two_clamped)
                         
  
- 
+                        
  
  
  

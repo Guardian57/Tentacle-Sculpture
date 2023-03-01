@@ -9,7 +9,7 @@
 #define M_NUM 4 //number of motors being driven
 
 #define CW_BUTT 4 //button for manually controlling motor CW
-#define CCW_BUTT 8 //manually controlling motor CCW
+#define CCW_BUTT 5 //manually controlling motor CCW
 #define MOTOR_TOGGLE 3 //button switching between motors
 
 
@@ -20,7 +20,7 @@
 const int stepperPins[][2] = {{10, 11},                          
                               {12, 13},
                               {6, 7},
-                              {11, 12}
+                              {8, 9}
                              }; // (address, PUL, DIR)
 
 int stepperInfo[][3] = {{700, 100, 0},
@@ -33,6 +33,7 @@ long positions[M_NUM];
 
 
 int ppr = 400; //pulse per revolution based on stepper driver
+int gearBoxRatio = 15; //gearbox ratio, how many revolutions of stepper it takes to move gearbox shaft 360 deg
 int mSteps = 1; //amout of steps to move based on ppr. default 1
 float pulseDeg = 1.8;
 boolean isProcessing = false;
@@ -79,8 +80,9 @@ void setup() {
   Wire.onReceive(receiveEvent);
   Wire.onRequest(sendState); 
 
+  ppr = ppr*gearBoxRatio;
   pulseDeg = 360.0f/ppr;
-  mSteps = pulseDeg*10;
+  mSteps = pulseDeg*1000;
 }
 
 void receiveEvent(int howMany) {
@@ -127,7 +129,7 @@ void pulse(int stpr, int deg[]){
       //converts degrees into pulses factoring in micro steps
       float pulseDeg = 360.0f/ppr;
       
-      for(int i = 0; i < 2; i++){
+      for(int i = 0; i < M_NUM; i++){
            positions[i] = deg[i]/pulseDeg;
            Serial.println(String(i) + ": " + positions[i]);
         }
