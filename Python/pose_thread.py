@@ -7,7 +7,7 @@ from MpProcess import MpProcess
 import time
 
 
-show_video = False
+show_video = True
 process_frames = True
 
 #cap = cv2.VideoCapture(0)
