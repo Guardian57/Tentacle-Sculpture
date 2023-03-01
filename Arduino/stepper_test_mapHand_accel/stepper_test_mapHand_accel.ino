@@ -8,19 +8,19 @@
 
 #define M_NUM 4 //number of motors being driven
 
-#define CW_BUTT 4
-#define CCW_BUTT 5
-#define MOTOR_TOGGLE 3
+#define CW_BUTT 4 //button for manually controlling motor CW
+#define CCW_BUTT 8 //manually controlling motor CCW
+#define MOTOR_TOGGLE 3 //button switching between motors
 
 
 // Defin pins
 
 
 
-const int stepperPins[][2] = {{6, 7},
-                              {8, 9},
-                              {10, 11},                          
-                              {12, 13}
+const int stepperPins[][2] = {{10, 11},                          
+                              {12, 13},
+                              {6, 7},
+                              {11, 12}
                              }; // (address, PUL, DIR)
 
 int stepperInfo[][3] = {{700, 100, 0},
@@ -32,7 +32,7 @@ int stepperInfo[][3] = {{700, 100, 0},
 long positions[M_NUM];
 
 
-int ppr = 200; //pulse per revolution based on stepper driver
+int ppr = 400; //pulse per revolution based on stepper driver
 int mSteps = 1; //amout of steps to move based on ppr. default 1
 float pulseDeg = 1.8;
 boolean isProcessing = false;
@@ -80,7 +80,7 @@ void setup() {
   Wire.onRequest(sendState); 
 
   pulseDeg = 360.0f/ppr;
-  mSteps = pulseDeg*100;
+  mSteps = pulseDeg*10;
 }
 
 void receiveEvent(int howMany) {
