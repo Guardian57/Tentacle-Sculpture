@@ -42,6 +42,7 @@ class Tentacle:
         
         
         #self.animation.run_animation("motor_test")
+        
         #self.animation.run_animation("test_animation")
         #exit()
 
@@ -70,29 +71,19 @@ class Tentacle:
         # change this to new format for reset command if applicable
         
         self.animation.write_data([0, 0, 0, 0,  1])
-        self.animation.stall()
+        #self.animation.stall()
         print("calibration complete. starting program...")
         print()
 
-        self.test_animation("test_animation")
-        self.animation.run_animation("return_to_zero")
+        #self.test_animation("test_animation")
+        #self.animation.run_animation("return_to_zero")
         
 
 
     def main(self):
         while self.running:
-            
-            '''
-            TO TEST ANIMATION
-            uncomment self.test_animation() and replace parameter in parenthesis with name of animation in quotation marks
-            comment out self.process_video()
-            this will loop the animation
-            
-            UNCOMMENT break TO STOP ANIMATION FROM LOOPING
-            '''
-            self.test_animation("test_animation")
-            
-            #self.process_video()
+
+            self.process_video()
             #break
         pass
 
@@ -103,21 +94,23 @@ class Tentacle:
     
     
     def process_video(self):
+        
         if self.video.idle:
+            print("idle video detect")
             if self.idle == False:
                 self.idle_timer == time.perf_counter() + self.idle_cooldown
                 self.idle = True
-            elif time.perf_counter() >= self.idle_timer:
-                self.animation.run_animation("return_to_zero")
-                #self.animation.run_animation("idle_twitch")
+                print("ping")
+            elif self.idle and time.perf_counter() >= self.idle_timer:
+                self.animation.run_animation("idle_twitch")
                 self.idle_timer == time.perf_counter()+self.idle_cooldown
         else:
-            if self.idle:
+            if self.idle == True:
                 self.idle = False
                 print()
                 print("Tracking Person!")
             
-            if self.video.model_present:
+            if self.video.model_present and self.idle == False:
                 new_targets = self.reader.read_pose(self.video.get_landmarks())
                 #print(str(new_targets) + "|||" + str(self.targets))
                 if not new_targets == self.targets:
@@ -128,7 +121,8 @@ class Tentacle:
                             self.animation.write_data(targets);
                             break
                         except:
-                            pass                    
+                            print("tracker writer error")
+                            break                    
             
         if self.video.get_stopped():
             self.running = False

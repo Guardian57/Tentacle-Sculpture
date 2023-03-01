@@ -33,8 +33,10 @@ class AnimationMethods:
     def stall(self): # a stall to wait for the command to finish before starting a new one
         waiting = True
         while(waiting):
+            
             try: # waits for the motor status to be empty of bits, meaning the command is finished executing
                 status = self.bus.read_byte(self.address)
+                #print(status)
                 if(status == 0):
                     waiting = False
                 time.sleep(.1) # a small delay to improve stability
@@ -48,60 +50,58 @@ class AnimationMethods:
         self.moving = True # whether the animation is running
         self.step = 0 # which step in the list of commands program is at
         
-        self.uptime = time.perf_counter() # time the command started being executed
-
         config = ConfigParser()  
         config.read("animation_configs.ini") # reads the config file
 
         config_read = config["DEFAULT"]
         command = config_read[animation] # reads the animation listed in parameters
 
-        commands = command.split(" ") # splits the commands into multiple steps
-        print(commands)
+        command_lines = command.split("\n") # splits the commands into multiple steps
+        if command_lines[0] == "":
+            command_lines = command_lines[1:]
+        print(command_lines)
         print("Starting Animation: " + animation)
         print()
         
-        
-        delay_between_movements = True # assumes there is a delay between commands until proven to not need a delay
-        while self.step < len(commands): # while there are still commands that need to be executed
+        while self.step < len(command_lines): # while there are still commands that need to be executed
             # if the current time is greater than the current time and the delay. default is zero to start command immediately
-            if time.perf_counter() > self.uptime + .1 and time.perf_counter() > self.current_time + self.delay:
+            # print("step: " + str(self.step))
+            if time.perf_counter() > self.delay:
                 
-                while True: # crash protection
-                    try:
-                        self.current_time = time.perf_counter() # sets the current time
-                        
-                        
-                        command_pieces = commands[self.step].split("_") # splits the current command into its smaller parts
-                        if delay_between_movements: # triggers to wait until command can be executed
-                            self.stall() # stalls the program until the motors are done moving
-                        print(command_pieces) 
-                        motor_num = command_pieces[0]
-                        new_target = command_pieces[1]
-                        
-                        self.targets[int(motor_num)] = int(new_target)
-                        
-                        self.write_data(self.targets) # writes the command
-                        #self.write_data(motor_num+"_"+new_target) # writes the command
-                      
-                        check_delay = command_pieces[2] # checks if there is a delay
-                        if check_delay == "*": # asterisk means next command should trigger immediately
-                            self.delay = 0 # delay is set to zero
-                            print("No delay")
-                            delay_between_movements = False # skips the stall command
-                        else:
-                            delay_between_movements = True
-                            print("delay: " + check_delay) 
-                            self.delay = int(check_delay) # sets the new delay
-                            
-                        self.step+=1 # moves on to next step
-                        break
+                
+                command = command_lines[self.step] 
+
+                step_delay = 0 # delay of command is zero by default
+                if "|" in command: # checks if a delay was logged in the command
+                    delay_index = command.find("|")
+                    step_delay = command[delay_index+1:] # separates the delay from the rest of the command
+                    step_delay = step_delay.replace(" ", "") # removes any whitespaces
+                    step_delay = int(step_delay) # typecasts to int
+                    command = command[:delay_index]
+                
+                #print(command)
+                command_steps = command.split() # splits command by whitespaces
+                #print(command_steps)
+                for i in range(len(command_steps)): # iterates through single angle commands
+                    single_command = command_steps[i].split("_") # makes a single command in two parts
+                    motor_num = int(single_command[0])
+                    new_target = int(single_command[1])
                     
-                        
-                    except:
-                        print("animation error")
+                    if new_target > 180:
+                        new_target -= 180
                     
                     
+                    value_scaled = float(new_target) / float(180)
+                    new_target = int(value_scaled * 255)
+                    
+                    self.targets[motor_num] = new_target
+                    
+                print(self.targets)
+                self.write_data(self.targets)
+                self.stall() # makes sure tentacle isn't moving before executing command
+                self.delay = step_delay + time.perf_counter()
+                self.step+=1 # moves on to next step
+                
                 
         self.moving = False # the animation is complete
         print()

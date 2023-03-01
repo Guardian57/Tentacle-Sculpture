@@ -73,6 +73,8 @@ class PoseReader:
         
         #self.is_waving = (self.waving(self.right_wave, right_angles) or self.waving(self.left_wave, left_angles) or self.wave_time!=0)
         
+        self.targets = [0, 0, 0, 0]
+        
         return self.targets
     
     def find_head(self, landmarks):
@@ -89,7 +91,7 @@ class PoseReader:
     
     # translates a target x and y into a rough rotation array
     def pos_to_rot(self, x, y):
-        
+
         increment_to_change = 5 # required amount of change for the command to be changed
         changing = False
         
@@ -102,7 +104,10 @@ class PoseReader:
         x_prev = self.x_prev
         y_prev = self.y_prev
         
-        # HEAD TRACKING
+        # HEAD TRACKING.
+        # Tracks the head first to use that as a relative location for the hand
+        # This is mostly necessary to account for people standing at different distances
+        # waiting to be changed
         
         if abs(x_mid-x_prev) >= increment_to_change:
             x_prev = x_mid
@@ -116,26 +121,9 @@ class PoseReader:
             self.targets[2] = y_mid*y_scale
             self.targets[3] = y_mid*y_scale
             
-            '''
-            #adjusting y through simultaneous change
-            
-            
-            y_flip = 100-y # this is to flip numbers so that y gets larger when moving up
-                        
-            self.targets[0] = y_flip
-            self.targets[1] = y_flip
-            self.targets[2] = y_mid*y_scale
-            self.targets[3] = y_mid*y_scale
-            #print(str(x) + " " + str(y) + " --> " + str(self.targets[0]) + " " + str(self.targets[1]))
+           
         
-            left_change = x_mid-x
-            right_change = x-x_mid
-            self.targets[0] = max(0, self.targets[0]+right_change)
-            self.targets[1] = max(0, self.targets[1]+left_change)
-            print(str(self.targets[0]) + " " + str(self.targets[1]))
-            '''
         
-    
     
     def create_joint_angles(self, landmarks):
         '''
@@ -262,5 +250,5 @@ class PoseReader:
             print("wave error")
         return False
 
-         
+
 

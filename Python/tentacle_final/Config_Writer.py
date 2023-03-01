@@ -4,31 +4,49 @@ config = ConfigParser()
 '''
     CONFIG FORMATTING GUIDE
     
-    "animation_name": "motorNumber_targetAngle_delayAfterCommand",
+    "animation_name": 'motorNumber_targetAngle_delayAfterCommand | delay'
     
-    "example": "1_200_2 0_100_0",
-    motor 1 moves to 200 degrees then waits 2 seconds. Then moves motor 0 to 100 degrees and does not delay after
-    
-    to make two animations trigger simultaneously, replace delayAfterCommand with *
-    "example": 2_100_* 1_200_0",
+    "example": '1_180 0_90 | 3',
+    motor 1 moves to 180 degrees. Then moves motor 0 to 90 degrees. Then delays by 3 seconds.
     
     IMPORTANT:
-    if last animation in list, do not put a comma after the closing quotation mark
+    
+    Max Angle : 180
+    Moves to an angle, not by an angle
+    0_90 moves motor 0 to 90 degrees. If the next command is 0_95, it moves to 95 degrees, not to 185
+    
+    If last animation in list, do not put a comma after the closing quotation mark
+    
+    Use three apostrophes in actual file
     
     Once finished editing, run the Config_Writer to save to the config file
 '''
 
 config["DEFAULT"] = {
+    
+    "test_animation": '''
+        0_100 1_100 
+        0_220 1_30 3_150 
+        0_10 1_10 2_180 3_30 
+        0_0 1_0 2_0 3_0 
+        ''',
+    
+    "motor_test": '''
+        0_180
+        0_0
+        1_180
+        1_0
+        2_180
+        2_0
+        3_180
+        3_0
+        ''',
+    
+    "idle_twitch": '''
+        0_100 1_100 | 1
+        0_0 1_0
+        '''
 
-    
-    "test_animation": "0_100_* 1_100_3 0_220_* 1_30_* 3_150_3 0_10_* 1_10_* 2_180_* 3_30_3 0_0_* 1_0_* 2_0_* 3_0_0 0_0_* 1_0_* 2_0_* 3_0_0",
-    
-    "idle_twitch": "0_100_* 1_100_0 0_200_0 1_200_0 0_0_0 1_0_0",
-    
-    "motor_test": "0_255_3 0_0_3 1_255_3 1_0_3 2_255_3 2_0_3 3_255_3 3_0_5",
-    
-    "return_to_zero": "0_0_* 1_0_* 2_0_* 3_0_0"
-    
 }
     
 with open("animation_configs.ini", "w") as f:

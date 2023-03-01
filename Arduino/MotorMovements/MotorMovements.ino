@@ -99,19 +99,22 @@ void receiveEvent(int howMany){ // took this off the interwebs. gets a string co
   }
   
   Serial.print(String(howMany) + " received: ");
+  
   for(int i = 0; i < howMany;i++){
     data[i] = Wire.read();
     Serial.print(String(data[i]) + "_");
+    
   }
   Serial.println();
   
+  bitWrite(motorData, 0, 1);
   receiveFlag = true;
 
 }
 
 void sendData()
 {
-  //printMotorData();
+  printMotorData();
   Wire.write(motorData);
 }
 
@@ -169,7 +172,7 @@ void updateMotorData(){
     }
   }
   if(oldData != motorData){
-  printMotorData();
+  //printMotorData();
   }
 }
 
