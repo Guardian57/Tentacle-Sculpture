@@ -95,36 +95,36 @@ class Tentacle:
     
     def process_video(self):
         
-        if self.video.idle:
-            print("idle video detect")
-            if self.idle == False:
-                self.idle_timer == time.perf_counter() + self.idle_cooldown
-                self.idle = True
-                print("ping")
-            elif self.idle and time.perf_counter() >= self.idle_timer:
-                self.animation.run_animation("idle_twitch")
-                self.idle_timer == time.perf_counter()+self.idle_cooldown
+        if self.video.idle: # if the program is idled
+            
+            if self.idle == False: # if it just switched to idle
+                self.idle_timer == time.perf_counter() + self.idle_cooldown # starts a timer for when to play the animation
+                self.idle = True # idle is now true
+                
+            elif self.idle and time.perf_counter() >= self.idle_timer: # if the code is set to idle and needs to play animation
+                self.animation.run_animation("idle_twitch") # plays the idle twitch animation
+                self.idle_timer == time.perf_counter()+self.idle_cooldown # creates a delay between animations
         else:
-            if self.idle == True:
-                self.idle = False
+            if self.idle == True: # if idle just became false in video
+                self.idle = False # sets idle to false
                 print()
                 print("Tracking Person!")
             
-            if self.video.model_present and self.idle == False:
-                new_targets = self.reader.read_pose(self.video.get_landmarks())
+            if self.video.model_present and self.idle == False: # if not idling and a model is present
+                new_targets = self.reader.read_pose(self.video.get_landmarks()) # tracks pose using landmarks from video
                 #print(str(new_targets) + "|||" + str(self.targets))
-                if not new_targets == self.targets:
-                    self.targets = new_targets[:]
-                    print(self.targets)
+                if not new_targets == self.targets: # if the targets are different from the current position
+                    self.targets = new_targets[:] # sets the new targets
+                    #print(self.targets)
                     while True:
                         try:
-                            self.animation.write_data(targets);
+                            self.animation.write_data(targets); # writes the targets to arduino
                             break
                         except:
                             print("tracker writer error")
                             break                    
             
-        if self.video.get_stopped():
+        if self.video.get_stopped(): # stops the code and resets tentacle
             self.running = False
             self.animation.run_animation("return_to_zero")
             exit()
