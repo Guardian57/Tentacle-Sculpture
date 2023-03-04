@@ -64,7 +64,7 @@ class MpProcess:
         
         #timers for tracking
         self.track_timer_time = time.perf_counter()
-        self.track_timer_duration = time.perf_counter()
+        self.track_timer_duration = 5
         
     
     def start (self):
@@ -139,8 +139,15 @@ class MpProcess:
                         #position of the hand
                         self.handPos = hand[0] * 640 #multiplied by screen dimentions
                         
-                        motor_top_one_map = map_range(self.handPos, minlim, maxlim, 180, 0)
-                        motor_top_two_map = map_range(self.handPos, minlim, maxlim, 0, 180)
+                        if time.perf_counter() >= self.track_timer_time:
+                            
+                            self.delayedPos = self.handPos
+                            
+                            self.track_timer_time = time.perf_counter() + self.track_timer_duration
+                            print('what')
+                        
+                        motor_top_one_map = map_range(self.delayedPos, minlim, maxlim, 0, 180)
+                        motor_top_two_map = map_range(self.delayedPos, minlim, maxlim, 180, 0)
                         
                         motor_top_one_clamped = clamp_number(motor_top_one_map, 180, 0)
                         motor_top_two_clamped = clamp_number(motor_top_two_map, 0, 180)
