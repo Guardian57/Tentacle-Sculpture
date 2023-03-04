@@ -46,10 +46,8 @@ class MpProcess:
         Thread(target=self.process,args = ()).start()
         return self
     
-    
-    
     def process (self):
-        #Initiate holistic mdel
+        
         motor_top_one = 180; #motors labeled one are on the same side. top and bottom controls. operators right viewers left
         motor_top_two = 180;
         
