@@ -45,7 +45,7 @@ class MpProcess:
         
         #animation Merge variables 
         self.motionAnimToggle = 1 # toggle for switching in between animation and motion tracking mode for each run
-        self.animation = AnimationMethods(self.addr, self.bus)
+        self.animation = AnimationMethods(addr, bus)
         self.playOnce = False #make sure the animation only palys once (test variable)
     
     def start (self):
@@ -96,7 +96,8 @@ class MpProcess:
                 
                 
                 try:
-                    if motionAnimToggle == 0: #this will eventually become the idle or gesture sensing portion but hard coded toggle for testing
+                    
+                    if self.motionAnimToggle == 0: #this will eventually become the idle or gesture sensing portion but hard coded toggle for testing
                     
                         landmarks = results.pose_landmarks.landmark
                         
@@ -167,14 +168,16 @@ class MpProcess:
                                 #print(self.currentPos)
                             self.currentPos = val_when_enter
                     
-                    elif motionAnimToggle == 1:
+                    elif self.motionAnimToggle == 1:
                         
                         #run the animation instead of motion track
-                        if playOnce == False:
-                            self.animation.run_animation("idle_twitch")
-                            playOnce = True
-                        
-                        
+                        if self.playOnce == False:
+                            
+                            self.playOnce = True
+                            self.animation.run_animation("jake_test")
+                            print('This played')
+                            
+                            self.motionAnimToggle = 0
                         
                             
                             
@@ -184,6 +187,7 @@ class MpProcess:
                   
                 except:
                     print('oh no')
+                    bus.write_i2c_block_data(addr,0x07,[180,180,180,180])
                     pass
                   
     

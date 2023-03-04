@@ -90,7 +90,7 @@ void receiveEvent(int howMany) {
     int degs[M_NUM]; 
     
     while (Wire.available()){
-        //isProcessing = true;
+        isProcessing = true;
         
         for(int i = 0; i < howMany;i++){
             dataArray[i] = Wire.read();
@@ -209,6 +209,8 @@ void loop() {
         stepper[i].run();
 
         }
+        if(stepper[0].distanceToGo() == 0 && stepper[1].distanceToGo() == 0 && stepper[2].distanceToGo() == 0 && stepper[3].distanceToGo() == 0)
+        isProcessing = false;
       }
      
      

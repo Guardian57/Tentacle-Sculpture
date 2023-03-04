@@ -11,11 +11,12 @@ class AnimationMethods:
     def __init__ (self, address, bus):
         self.address = address
         self.bus = SMBus(1)
+        time.sleep(0.1)
         
         
         self.motor_count = 4 # number of motors
         self.maximum_angle = 180 # maximum angle motors can turn
-        self.targets = [0,0,0,0]
+        self.targets = [90,90,90,90]
         
         self.step = 0 # which step of the animation we are on
         self.uptime = time.perf_counter() # the time the program started running
@@ -24,7 +25,7 @@ class AnimationMethods:
         
         self.write_data(self.targets) # writing motor data
         
-        self.stall() # a stall to make sure all calibrations are done
+#         self.stall() # a stall to make sure all calibrations are done
         time.sleep(.1)
         #self.write_data([0, 0, 0, 0, 1]); # a reset command to set the new zeroes for the motor
         print("Animations Ready")
@@ -37,7 +38,7 @@ class AnimationMethods:
             try: # waits for the motor status to be empty of bits, meaning the command is finished executing
                 status = self.bus.read_byte(self.address)
                 #print(status)
-                if(status == 0):
+                if(status == 1):
                     waiting = False
                 time.sleep(.1) # a small delay to improve stability
             except:
@@ -64,10 +65,12 @@ class AnimationMethods:
         print()
         
         while self.step < len(command_lines): # while there are still commands that need to be executed
+            print(self.step, len(command_lines))
             # if the current time is greater than the current time and the delay. default is zero to start command immediately
             # print("step: " + str(self.step))
             if time.perf_counter() > self.delay:
-                
+                print(time.perf_counter)
+                print(self.delay);
                 
                 command = command_lines[self.step] 
 
@@ -91,8 +94,10 @@ class AnimationMethods:
                         new_target -= 180
                     
                     
-                    value_scaled = float(new_target) / float(180)
-                    new_target = int(value_scaled * 255)
+#                     value_scaled = float(new_target) / float(180)
+#                     new_target = int(value_scaled * 255)
+                    
+                    new_target = 180 - new_target
                     
                     self.targets[motor_num] = new_target
                     
@@ -106,17 +111,12 @@ class AnimationMethods:
         self.moving = False # the animation is complete
         print()
         
-    # I didn't make this don't touch it, it's fine. used in old version of program
-    def string_to_bytes(self, val):
-        ret_val = []
-        for c in val:
-            ret_val.append(ord(c))
-        return ret_val
+   
 
 
     def write_data(self, value): # writes the command to the arduino
         #byte_value = self.string_to_bytes(value) # used in old version
-        self.bus.write_i2c_block_data(self.address,0x00,value) #first byte is 0=command byte.. just is.
+        self.bus.write_i2c_block_data(self.address,0x07,value) #first byte is 0=command byte.. just is.
         print("to Arduino: " + str(value))
         return -1
 
