@@ -35,18 +35,37 @@ class MpProcess:
 
 
       
-    def __init__(self, curPos, frame=None):
+    def __init__(self, reset, curPos, frame=None):
+        
         self.currentPos = curPos
-        bus.write_i2c_block_data(addr,0x00,[curPos])
+        
+        if reset:
+            bus.write_i2c_block_data(addr,0x00,[curPos])
+        
         self.frame = frame
         self.image = frame
         self.hand_state = 0
         self.stopped = False
         
         #animation Merge variables 
-        self.motionAnimToggle = 1 # toggle for switching in between animation and motion tracking mode for each run
+        self.motionAnimToggle = 0 # toggle for switching in between animation and motion tracking mode for each run
         self.animation = AnimationMethods(addr, bus)
-        self.playOnce = False #make sure the animation only palys once (test variable)
+        
+        
+        #plays animation on startup before doing anything else. "wake up" animation
+        self.animation.run_animation("left")
+        
+        #timers for playing animation
+        self.anim_timer_time = time.perf_counter()
+        self.anim_timer_duration = 20
+        self.anim_name_string = "jake_test"
+        self.tracking_start = True #tells if its the first time through tracking loop
+        self.idle_start = True #tells if its the first time through idle loop
+        
+        #timers for tracking
+        self.track_timer_time = time.perf_counter()
+        self.track_timer_duration = time.perf_counter()
+        
     
     def start (self):
         Thread(target=self.process,args = ()).start()
@@ -97,87 +116,87 @@ class MpProcess:
                 
                 try:
                     
-                    if self.motionAnimToggle == 0: #this will eventually become the idle or gesture sensing portion but hard coded toggle for testing
+                    if self.tracking_start: #if it is the first time through the loop, reset timer, set animation interval and animation
+                        self.anim_timer_duration = 30
+                        
+                        self.anim_timer_time = time.perf_counter() + self.anim_timer_duration
+                        
+                        self.tracking_start = False
+                        self.idle_start = True
+                        
                     
-                        landmarks = results.pose_landmarks.landmark
+                    
+                    
+                    
                         
-                        soulder = [landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y]
-                        hand = [landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].x, landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].y]
+                    landmarks = results.pose_landmarks.landmark
+                    
+                    soulder = [landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y]
+                    hand = [landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].x, landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].y]
+                    
+                    if cmd_out == False:
                         
+                        #position of the hand
+                        self.handPos = hand[0] * 640 #multiplied by screen dimentions
+                        
+                        motor_top_one_map = map_range(self.handPos, minlim, maxlim, 180, 0)
+                        motor_top_two_map = map_range(self.handPos, minlim, maxlim, 0, 180)
+                        
+                        motor_top_one_clamped = clamp_number(motor_top_one_map, 180, 0)
+                        motor_top_two_clamped = clamp_number(motor_top_two_map, 0, 180)
+                        
+                        motor_top_one = int(motor_top_one_clamped)
+                        motor_top_two = int(motor_top_two_clamped)
+                        
+                        print("Top Motor 01 pos: ",motor_top_one)
+                        print("Top Motor 02 pos: ",motor_top_two)
+                        
+                        #determins the influence the top motors have over the bottom motors position based on top motors position. 180 Deg = range of motion, 0 Deg = full range of motion
+                        motor_influence_one = map_range(motor_top_one, 0 , 180, 0.5, 1)
+                        motor_influence_two = map_range(motor_top_two, 0 , 180, 0.5, 1)
+                        
+                        print('influence 1: ',motor_influence_one)
+                        print('influence 2: ',motor_influence_two)
+                        
+                        # the limits for the mapping function aftected by an influence value that is tied to the top motors positioning 
+                        motor_bot_one_limit = 180 * motor_influence_one
+                        motor_bot_two_limit = 180 * motor_influence_two
+                            
+                        #mapping the hand position to the motor range with limits applied
+                        motor_bot_one_map = map_range(self.handPos, minlim, maxlim, 180, 180 - motor_bot_one_limit) #mapping hand screen pos to 180 deg rotation. 
+                        motor_bot_two_map = map_range(self.handPos, minlim, maxlim, 180 - motor_bot_two_limit, 180) #reverses the direction of the motor by changing the upper limit to a lower limit (subtracting 180) and mapping it backwards
+                        
+                        #making sure motor position does not go past limits
+                        motor_bot_one_clamped = clamp_number(motor_bot_one_map, 180, 180 - motor_bot_one_limit)
+                        motor_bot_two_clamped = clamp_number(motor_bot_two_map, 180 - motor_bot_two_limit, 180)
+                        
+                        motor_bot_one = int(motor_bot_one_clamped)
+                        motor_bot_two = int(motor_bot_two_clamped)
+                        
+ 
+                        
+ 
+ 
+ 
+ 
                         if cmd_out == False:
+                            cmd_out = True
+                            print("cmd started ", format(cmd_out))
+                            val_when_enter = motor_bot_one
+                            print('Motor_bottom_one: ', motor_bot_one)
+                            print('Motor_bottom_two: ', motor_bot_two)
+                            bus.write_i2c_block_data(addr,0x07,[motor_top_one, motor_top_two, motor_bot_one, motor_bot_two])
                             
-                            #position of the hand
-                            handPos = hand[0] * 640 #multiplied by screen dimentions
-                            
-                            motor_top_one_map = map_range(handPos, minlim, maxlim, 180, 0)
-                            motor_top_two_map = map_range(handPos, minlim, maxlim, 0, 180)
-                            
-                            motor_top_one_clamped = clamp_number(motor_top_one_map, 180, 0)
-                            motor_top_two_clamped = clamp_number(motor_top_two_map, 0, 180)
-                            
-                            motor_top_one = int(motor_top_one_clamped)
-                            motor_top_two = int(motor_top_two_clamped)
-                            
-                            
-                            
-                            print("Top Motor 01 pos: ",motor_top_one)
-                            print("Top Motor 02 pos: ",motor_top_two)
-                            
-                            #determins the influence the top motors have over the bottom motors position based on top motors position. 180 Deg = range of motion, 0 Deg = full range of motion
-                            motor_influence_one = map_range(motor_top_one, 0 , 180, 0.5, 1)
-                            motor_influence_two = map_range(motor_top_two, 0 , 180, 0.5, 1)
-                            
-                            print('influence 1: ',motor_influence_one)
-                            print('influence 2: ',motor_influence_two)
-                            
-                            # the limits for the mapping function aftected by an influence value that is tied to the top motors positioning 
-                            motor_bot_one_limit = 180 * motor_influence_one
-                            motor_bot_two_limit = 180 * motor_influence_two
-                                
-                            #mapping the hand position to the motor range with limits applied
-                            motor_bot_one_map = map_range(handPos, minlim, maxlim, 180, 180 - motor_bot_one_limit) #mapping hand screen pos to 180 deg rotation. 
-                            motor_bot_two_map = map_range(handPos, minlim, maxlim, 180 - motor_bot_two_limit, 180) #reverses the direction of the motor by changing the upper limit to a lower limit (subtracting 180) and mapping it backwards
-                            
-                            #making sure motor position does not go past limits
-                            motor_bot_one_clamped = clamp_number(motor_bot_one_map, 180, 180 - motor_bot_one_limit)
-                            motor_bot_two_clamped = clamp_number(motor_bot_two_map, 180 - motor_bot_two_limit, 180)
-                            
-                            motor_bot_one = int(motor_bot_one_clamped)
-                            motor_bot_two = int(motor_bot_two_clamped)
-                            
-     
-                            
-     
-     
-     
-     
-                            if cmd_out == False:
-                                cmd_out = True
-                                print("cmd started ", format(cmd_out))
-                                val_when_enter = motor_bot_one
-                                print('Motor_bottom_one: ', motor_bot_one)
-                                print('Motor_bottom_two: ', motor_bot_two)
-                                bus.write_i2c_block_data(addr,0x07,[motor_top_one, motor_top_two, motor_bot_one, motor_bot_two])
-                                
-                        elif cmd_out == True:
-                            status = bus.read_byte(addr)
-                            print(status)
+                    elif cmd_out == True:
+                        status = bus.read_byte(addr)
+                        print(status)
+                
+                        if status == 1:
+                            cmd_out = False
+                            #print(self.currentPos)
+                        self.currentPos = val_when_enter
                     
-                            if status == 1:
-                                cmd_out = False
-                                #print(self.currentPos)
-                            self.currentPos = val_when_enter
                     
-                    elif self.motionAnimToggle == 1:
-                        
-                        #run the animation instead of motion track
-                        if self.playOnce == False:
-                            
-                            self.playOnce = True
-                            self.animation.run_animation("jake_test")
-                            print('This played')
-                            
-                            self.motionAnimToggle = 0
                         
                             
                             
@@ -186,10 +205,39 @@ class MpProcess:
                     #print("try finished")
                   
                 except:
-                    print('oh no')
+                    
+                    if self.idle_start: #if it is the first time through the loop, reset timer, set animation interval and animation
+                        
+                        self.anim_timer_duration = 50
+                        
+                        self.anim_timer_time = time.perf_counter() + self.anim_timer_duration
+                        
+                        #makes sure this code only runs once and resets tracking loops code to run once on start 
+                        self.idle_start = False
+                        self.tracking_start = True
+                    
+                    #resets the position to resting position 0
                     bus.write_i2c_block_data(addr,0x07,[180,180,180,180])
+                    
                     pass
-                  
+                
+                
+                if time.perf_counter() >= self.anim_timer_time:
+                    print('playing animation')
+                    
+                    if self.handPos >= 320:
+                        self.animation.run_animation("left")
+                    else:
+                        #play animation
+                        self.animation.run_animation("right")
+                    
+                    #reset timer
+                    self.anim_timer_time = time.perf_counter() + self.anim_timer_duration
+                    
+                    #resets both starting loops to play first iteration 
+                    self.idle_start = True
+                    self.tracking_start = True
+                
     
     def stop(self):
         self.stopped = True 

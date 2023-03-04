@@ -58,9 +58,9 @@ void setup() {
     //define stepper
     stepper[i] = AccelStepper(AccelStepper::DRIVER, stepperPins[i][0], stepperPins[i][1]);
     //configure stepper
-    stepper[i].setMaxSpeed(1000);
+    stepper[i].setMaxSpeed(5000);
 
-    stepper[i].setAcceleration(700);
+    stepper[i].setAcceleration(5000);
     
     //add stepper to MultiStepper
     steppers.addStepper(stepper[i]);

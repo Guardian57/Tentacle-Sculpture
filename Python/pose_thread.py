@@ -11,18 +11,28 @@ show_video = True
 process_frames = True
 
 #cap = cv2.VideoCapture(0)
-value = input("Please enter starting rotation: ")
+value = input("Please enter starting rotation. If you do not wish to reset, type any letter: ")
 
-start_rot = int(value)
+start_rot = None #default start rotation
+send_reset = False
+
+if value.isnumeric():
+    print('reseting starting position')
+    start_rot = int(value)
+    send_reset = True
 
 value = input("Type 'yes' to start tracking: ")
 if value == 'yes':
     print("calibration complete. starting program...")
 
 video_getter = VideoGet(0).start()
+
 if process_frames:
-    video_process = MpProcess(start_rot, video_getter.frame).start()
+    
+    video_process = MpProcess(send_reset, start_rot, video_getter.frame).start()
+    
 if show_video:
+    
     video_shower = VideoShow(video_getter.frame).start()
 
 

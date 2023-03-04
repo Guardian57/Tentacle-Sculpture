@@ -65,12 +65,11 @@ class AnimationMethods:
         print()
         
         while self.step < len(command_lines): # while there are still commands that need to be executed
-            print(self.step, len(command_lines))
+            
             # if the current time is greater than the current time and the delay. default is zero to start command immediately
             # print("step: " + str(self.step))
             if time.perf_counter() > self.delay:
-                print(time.perf_counter)
-                print(self.delay);
+                
                 
                 command = command_lines[self.step] 
 
@@ -97,7 +96,7 @@ class AnimationMethods:
 #                     value_scaled = float(new_target) / float(180)
 #                     new_target = int(value_scaled * 255)
                     
-                    new_target = 180 - new_target
+                    new_target = 180 - new_target #adjusts to flip motor orientation 
                     
                     self.targets[motor_num] = new_target
                     
