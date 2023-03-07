@@ -55,16 +55,22 @@ class MpProcess:
         #plays animation on startup before doing anything else. "wake up" animation
         self.animation.run_animation("left")
         
-        #timers for playing animation
+        #timer for playing animation
         self.anim_timer_time = time.perf_counter()
         self.anim_timer_duration = 20
         self.anim_name_string = "jake_test"
         self.tracking_start = True #tells if its the first time through tracking loop
         self.idle_start = True #tells if its the first time through idle loop
         
-        #timers for tracking
+        #timer for tracking
         self.track_timer_time = time.perf_counter()
         self.track_timer_duration = 5
+        
+        #timer so one person doesn't hog it
+        self.turn_timer_time = time.perf_counter()
+        self.turn_timer_duration = 65
+        self.turn_start = True
+        self.endOfSession = False
         
     
     def start (self):
@@ -118,13 +124,17 @@ class MpProcess:
                     
                     if self.tracking_start: #if it is the first time through the loop, reset timer, set animation interval and animation
                         self.anim_timer_duration = 30
-                        
+                        print('tracking reset')
                         self.anim_timer_time = time.perf_counter() + self.anim_timer_duration
+                        
                         
                         self.tracking_start = False
                         self.idle_start = True
                         
-                    
+                    if self.turn_start:
+                        print('reset turn time')
+                        self.turn_timer_time = time.perf_counter() + self.turn_timer_duration
+                        self.turn_start = False
                     
                     
                     
@@ -133,6 +143,9 @@ class MpProcess:
                     
                     soulder = [landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y]
                     hand = [landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].x, landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].y]
+                    
+                    if time.perf_counter() >= self.turn_timer_time:
+                        self.endOfSession = True
                     
                     if cmd_out == False:
                         
@@ -144,10 +157,12 @@ class MpProcess:
                             self.delayedPos = self.handPos
                             
                             self.track_timer_time = time.perf_counter() + self.track_timer_duration
-                            print('what')
+                            
                         
-                        motor_top_one_map = map_range(self.delayedPos, minlim, maxlim, 0, 180)
-                        motor_top_two_map = map_range(self.delayedPos, minlim, maxlim, 180, 0)
+                            
+                        
+                        motor_top_one_map = map_range(self.delayedPos, minlim, maxlim, 180, 0)
+                        motor_top_two_map = map_range(self.delayedPos, minlim, maxlim, 0, 180)
                         
                         motor_top_one_clamped = clamp_number(motor_top_one_map, 180, 0)
                         motor_top_two_clamped = clamp_number(motor_top_two_map, 0, 180)
@@ -155,15 +170,15 @@ class MpProcess:
                         motor_top_one = int(motor_top_one_clamped)
                         motor_top_two = int(motor_top_two_clamped)
                         
-                        print("Top Motor 01 pos: ",motor_top_one)
-                        print("Top Motor 02 pos: ",motor_top_two)
+#                         print("Top Motor 01 pos: ",motor_top_one)
+#                         print("Top Motor 02 pos: ",motor_top_two)
                         
                         #determins the influence the top motors have over the bottom motors position based on top motors position. 180 Deg = range of motion, 0 Deg = full range of motion
                         motor_influence_one = map_range(motor_top_one, 0 , 180, 0.5, 1)
                         motor_influence_two = map_range(motor_top_two, 0 , 180, 0.5, 1)
                         
-                        print('influence 1: ',motor_influence_one)
-                        print('influence 2: ',motor_influence_two)
+#                         print('influence 1: ',motor_influence_one)
+#                         print('influence 2: ',motor_influence_two)
                         
                         # the limits for the mapping function aftected by an influence value that is tied to the top motors positioning 
                         motor_bot_one_limit = 180 * motor_influence_one
@@ -188,15 +203,15 @@ class MpProcess:
  
                         if cmd_out == False:
                             cmd_out = True
-                            print("cmd started ", format(cmd_out))
+#                             print("cmd started ", format(cmd_out))
                             val_when_enter = motor_bot_one
-                            print('Motor_bottom_one: ', motor_bot_one)
-                            print('Motor_bottom_two: ', motor_bot_two)
+#                             print('Motor_bottom_one: ', motor_bot_one)
+#                             print('Motor_bottom_two: ', motor_bot_two)
                             bus.write_i2c_block_data(addr,0x07,[motor_top_one, motor_top_two, motor_bot_one, motor_bot_two])
                             
                     elif cmd_out == True:
                         status = bus.read_byte(addr)
-                        print(status)
+#                         print(status)
                 
                         if status == 1:
                             cmd_out = False
@@ -214,7 +229,7 @@ class MpProcess:
                 except:
                     
                     if self.idle_start: #if it is the first time through the loop, reset timer, set animation interval and animation
-                        
+                        print('idle reset')
                         self.anim_timer_duration = 50
                         
                         self.anim_timer_time = time.perf_counter() + self.anim_timer_duration
@@ -222,11 +237,13 @@ class MpProcess:
                         #makes sure this code only runs once and resets tracking loops code to run once on start 
                         self.idle_start = False
                         self.tracking_start = True
+                        self.turn_start = True
                     
                     #resets the position to resting position 0
                     bus.write_i2c_block_data(addr,0x07,[180,180,180,180])
                     
                     pass
+                
                 
                 
                 if time.perf_counter() >= self.anim_timer_time:
@@ -242,6 +259,18 @@ class MpProcess:
                     self.anim_timer_time = time.perf_counter() + self.anim_timer_duration
                     
                     #resets both starting loops to play first iteration 
+                    self.idle_start = True
+                    self.tracking_start = True
+                    
+                if self.endOfSession:
+                    print("Session Ended")
+                    #resets the position to resting position 0
+                    bus.write_i2c_block_data(addr,0x07,[180,180,180,180])
+                    time.sleep(15);
+                    self.turn_start = True
+                    self.endOfSession = False
+                    
+                    #reset timers on start of new session 
                     self.idle_start = True
                     self.tracking_start = True
                 
