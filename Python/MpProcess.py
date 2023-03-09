@@ -72,6 +72,10 @@ class MpProcess:
         self.turn_start = True
         self.endOfSession = False
         
+        #timer to prevent glitches while in idle mode
+        self.glitch_timer_time = time.perf_counter()
+        self.glitch_timer_duration = 5
+        
     
     def start (self):
         Thread(target=self.process,args = ()).start()
@@ -122,27 +126,31 @@ class MpProcess:
                 
                 try:
                     
-                    if self.tracking_start: #if it is the first time through the loop, reset timer, set animation interval and animation
-                        self.anim_timer_duration = 30
-                        print('tracking reset')
-                        self.anim_timer_time = time.perf_counter() + self.anim_timer_duration
-                        
-                        
-                        self.tracking_start = False
-                        self.idle_start = True
-                        
-                    if self.turn_start:
-                        print('reset turn time')
-                        self.turn_timer_time = time.perf_counter() + self.turn_timer_duration
-                        self.turn_start = False
-                    
-                    
-                    
-                        
                     landmarks = results.pose_landmarks.landmark
-                    
+                        
                     soulder = [landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y]
                     hand = [landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].x, landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].y]
+                    
+                    if time.perf_counter() >= self.glitch_timer_time:
+                        
+                        if self.tracking_start: #if it is the first time through the loop, reset timer, set animation interval and animation
+                            self.anim_timer_duration = 30
+                            print('tracking reset')
+                            self.anim_timer_time = time.perf_counter() + self.anim_timer_duration
+                            
+                            
+                            self.tracking_start = False
+                            self.idle_start = True
+                            
+                        if self.turn_start:
+                            print('reset turn time')
+                            self.turn_timer_time = time.perf_counter() + self.turn_timer_duration
+                            self.turn_start = False
+                        
+                        
+                        
+                            
+                        
                     
                     if time.perf_counter() >= self.turn_timer_time:
                         self.endOfSession = True
@@ -233,13 +241,13 @@ class MpProcess:
                         self.anim_timer_duration = 50
                         
                         self.anim_timer_time = time.perf_counter() + self.anim_timer_duration
-                        
+                        self.glitch_timer_time = time.perf_counter() + self.glitch_timer_duration
                         #makes sure this code only runs once and resets tracking loops code to run once on start 
                         self.idle_start = False
                         self.tracking_start = True
                         self.turn_start = True
                     
-                    #resets the position to resting position 0
+                    #resets the position to resting position 0 
                     bus.write_i2c_block_data(addr,0x07,[180,180,180,180])
                     
                     pass
@@ -248,12 +256,14 @@ class MpProcess:
                 
                 if time.perf_counter() >= self.anim_timer_time:
                     print('playing animation')
-                    
-                    if self.handPos >= 320:
-                        self.animation.run_animation("left")
+                    if self.tracking_start == False:
+                        if self.handPos >= 320:
+                            self.animation.run_animation("left")
+                        else:
+                            #play animation
+                            self.animation.run_animation("right")
                     else:
-                        #play animation
-                        self.animation.run_animation("right")
+                        self.animation.run_animation(self.anim_name_string)
                     
                     #reset timer
                     self.anim_timer_time = time.perf_counter() + self.anim_timer_duration
