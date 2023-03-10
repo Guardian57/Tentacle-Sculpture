@@ -86,8 +86,8 @@ class MpProcess:
         motor_top_one = 180; #motors labeled one are on the same side. top and bottom controls. operators right viewers left
         motor_top_two = 180;
         
-        maxlim = 540
-        minlim = 100
+        maxlim = 640 - 20
+        minlim = 0 + 20
         cmd_out = False
         val_when_enter = None
         
@@ -210,7 +210,7 @@ class MpProcess:
  
  
                         if cmd_out == False:
-                            cmd_out = True
+#                             cmd_out = True
 #                             print("cmd started ", format(cmd_out))
                             val_when_enter = motor_bot_one
 #                             print('Motor_bottom_one: ', motor_bot_one)
@@ -247,8 +247,10 @@ class MpProcess:
                         self.tracking_start = True
                         self.turn_start = True
                     
-                    #resets the position to resting position 0 
-                    bus.write_i2c_block_data(addr,0x07,[180,180,180,180])
+                    
+                        #resets the position to resting position 0 
+                        bus.write_i2c_block_data(addr,0x07,[180,180,180,180])
+                        
                     
                     pass
                 
@@ -275,7 +277,9 @@ class MpProcess:
                 if self.endOfSession:
                     print("Session Ended")
                     #resets the position to resting position 0
+                    
                     bus.write_i2c_block_data(addr,0x07,[180,180,180,180])
+                    
                     time.sleep(15);
                     self.turn_start = True
                     self.endOfSession = False
