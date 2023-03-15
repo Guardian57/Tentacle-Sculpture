@@ -75,7 +75,7 @@ class Tentacle:
         print("calibration complete. starting program...")
         print()
 
-        #self.test_animation("test_animation")
+        self.test_animation("test_animation")
         #self.animation.run_animation("return_to_zero")
         
 
