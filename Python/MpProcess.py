@@ -88,6 +88,10 @@ class MpProcess:
         
         maxlim = 640 - 20
         minlim = 0 + 20
+        
+        maxlimY = 480 - 20
+        minlimY = 0 + 20
+        
         cmd_out = False
         val_when_enter = None
         
@@ -120,6 +124,7 @@ class MpProcess:
                 mp_drawing.draw_landmarks(image,results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
                 
                 cv2.line(image, (minlim, 15), (maxlim, 15), (255,0,0), 5) #draws horizontal line
+                cv2.line(image, (15, minlimY), (15, maxlimY), (0,255,0), 5) #draws verticle line
                 
                 self.image = image
                 
@@ -159,6 +164,9 @@ class MpProcess:
                         
                         #position of the hand
                         self.handPos = hand[0] * 640 #multiplied by screen dimentions
+                        self.handPosY = hand[1] * 640
+                        
+                        
                         
                         if time.perf_counter() >= self.track_timer_time:
                             
@@ -167,7 +175,7 @@ class MpProcess:
                             self.track_timer_time = time.perf_counter() + self.track_timer_duration
                             
                         
-                            
+                        verticle_influence = map_range(self.handPosY, minlimY, maxlimY, 0.9, 0.3)    
                         
                         motor_top_one_map = map_range(self.delayedPos, minlim, maxlim, 0, 180)
                         motor_top_two_map = map_range(self.delayedPos, minlim, maxlim, 180, 0)
@@ -182,8 +190,8 @@ class MpProcess:
 #                         print("Top Motor 02 pos: ",motor_top_two)
                         
                         #determins the influence the top motors have over the bottom motors position based on top motors position. 180 Deg = range of motion, 0 Deg = full range of motion
-                        motor_influence_one = map_range(motor_top_one, 180 , 0, 0.5, 1)
-                        motor_influence_two = map_range(motor_top_two, 180 , 0, 0.5, 1)
+                        motor_influence_one = map_range(motor_top_one, 180 , 0, verticle_influence, 1)
+                        motor_influence_two = map_range(motor_top_two, 180 , 0, verticle_influence, 1)
                         
 #                         print('influence 1: ',motor_influence_one)
 #                         print('influence 2: ',motor_influence_two)
