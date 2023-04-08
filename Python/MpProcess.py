@@ -201,9 +201,23 @@ class MpProcess:
                         motor_bot_one_limit = (180 * motor_influence_one)  
                         motor_bot_two_limit = (180 * motor_influence_two)
                         
+                        divid_one_low = map_range(motor_top_one, 180, 0, 2, 1.5)
+                        divid_one_high = map_range(motor_top_one, 180, 0, 4, 10)
+                        
+                        clamped_v1 = clamp_number(divid_one_low, 2, 1)
+                        clamped_v2 = clamp_number(divid_one_high, 4, 1)
+                        
+                        
+                        divid_two_low = map_range(motor_top_two, 180, 0, 2, 1.5)
+                        divid_two_high = map_range(motor_top_two, 180, 0, 4, 10)
+                        
+                        clamped_v1_1 = clamp_number(divid_two_low, 2, 1)
+                        clamped_v2_1 = clamp_number(divid_two_high, 4, 1)
+                        
+                        
 #                       #secondary limit which expands the range of bottom section motors based on the positon of the hand on the Y axis. limit is determined by adding a persentage of the range to the current motor postion
-                        m_b_1_l2 = motor_bot_one_limit + map_range(self.handPosY, minlimY, maxlimY, motor_bot_one_limit/2, -motor_bot_one_limit/4)                                                             
-                        m_b_2_l2 = motor_bot_two_limit + map_range(self.handPosY, minlimY, maxlimY, motor_bot_two_limit/2, -motor_bot_two_limit/4)    
+                        m_b_1_l2 = motor_bot_one_limit + map_range(self.handPosY, minlimY, maxlimY, motor_bot_one_limit/divid_one_low , -motor_bot_one_limit/divid_one_high)                                                             
+                        m_b_2_l2 = motor_bot_two_limit + map_range(self.handPosY, minlimY, maxlimY, motor_bot_two_limit/divid_two_low, -motor_bot_two_limit/divid_two_high)    
                         
                         #mapping the hand position to the motor range with secondary limits applied 
                         motor_bot_one_map = map_range(self.handPos, minlim, maxlim, 0, m_b_1_l2) 
