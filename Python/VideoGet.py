@@ -30,6 +30,7 @@ class VideoGet():
 
     def stop(self):
         self.stopped = True
+        self.stream.release()
 
     
         

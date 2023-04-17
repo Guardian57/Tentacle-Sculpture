@@ -6,7 +6,7 @@ import time
 from AnimationMethods import AnimationMethods
 
 addr = 0x8 # bus address
-bus = SMBus(1) # indicates /dev/ic2-1
+bus = SMBus(7) # indicates /dev/ic2-1
 
 
 
@@ -53,7 +53,7 @@ class MpProcess:
         
         
         #plays animation on startup before doing anything else. "wake up" animation
-        self.animation.run_animation("left")
+        # self.animation.run_animation("left")
         
         #timer for playing animation
         self.anim_timer_time = time.perf_counter()
@@ -272,14 +272,14 @@ class MpProcess:
                 
                 if time.perf_counter() >= self.anim_timer_time:
                     print('playing animation')
-                    if self.tracking_start == False:
-                        if self.handPos >= 320:
-                            self.animation.run_animation("left")
-                        else:
-                            #play animation
-                            self.animation.run_animation("right")
-                    else:
-                        self.animation.run_animation(self.anim_name_string)
+                    # if self.tracking_start == False:
+                    #     if self.handPos >= 320:
+                    #         self.animation.run_animation("left")
+                    #     else:
+                    #         #play animation
+                    #         self.animation.run_animation("right")
+                    # else:
+                    #     self.animation.run_animation(self.anim_name_string)
                     
                     #reset timer
                     self.anim_timer_time = time.perf_counter() + self.anim_timer_duration

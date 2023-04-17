@@ -10,7 +10,7 @@ class AnimationMethods:
     
     def __init__ (self, address, bus):
         self.address = address
-        self.bus = SMBus(1)
+        self.bus = SMBus(7)
         time.sleep(0.1)
         
         
@@ -57,6 +57,7 @@ class AnimationMethods:
         config_read = config["DEFAULT"]
         command = config_read[animation] # reads the animation listed in parameters
 
+        
         command_lines = command.split("\n") # splits the commands into multiple steps
         if command_lines[0] == "":
             command_lines = command_lines[1:]

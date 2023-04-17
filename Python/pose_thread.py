@@ -5,7 +5,16 @@ from VideoGet import VideoGet
 from VideoShow import VideoShow
 from MpProcess import MpProcess
 import time
+import signal
 
+def sig_handler(signum, frame):
+    video_getter.stop()
+    cv2.destroyAllWindows()
+    exit(1)
+
+
+signal.signal(signal.SIGINT, sig_handler)
+signal.signal(signal.SIGTSTP, sig_handler)
 
 show_video = False
 process_frames = True
@@ -25,7 +34,7 @@ value = input("Type 'yes' to start tracking: ")
 if value == 'yes':
     print("calibration complete. starting program...")
 
-video_getter = VideoGet(0).start()
+video_getter = VideoGet(1).start()
 
 if process_frames:
     
