@@ -277,8 +277,10 @@ class MpProcess:
                         #resets the position to resting position 0 
                         bus.write_i2c_block_data(addr,0x07,[0,0,0,0])
                         
+                        print('reset position check')
+                        
                     
-                    pass
+                    
                 
                 
                 
