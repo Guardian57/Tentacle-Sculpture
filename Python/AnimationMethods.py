@@ -52,11 +52,11 @@ class AnimationMethods:
         self.step = 0 # which step in the list of commands program is at
         
         config = ConfigParser()  
-        config.read("Desktop/Tentacle-Sculpture/Python/animation_configs.ini") # reads the config file
+        config.read(f"{os.path.dirname(__file__)}/animation_configs.ini") # reads the config file
 
         config_read = config["DEFAULT"]
         print(os.path.realpath(os.path.dirname(__file__)))
-        print(os.path.isfile("Desktop/Tentacle-Sculpture/Python/animation_configs.ini"))
+        print(os.path.isfile("animation_configs.ini"))
         command = config_read[animation] # reads the animation listed in parameters
 
         
