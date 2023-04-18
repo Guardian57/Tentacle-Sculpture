@@ -7,16 +7,17 @@ from MpProcess import MpProcess
 import time
 import signal
 
+#turns off the camera properly when an interupt happens
 def sig_handler(signum, frame):
     video_getter.stop()
     cv2.destroyAllWindows()
     exit(1)
 
-
+#registers signal handlers to catch interupts
 signal.signal(signal.SIGINT, sig_handler)
 signal.signal(signal.SIGTSTP, sig_handler)
 
-show_video = False
+show_video = True
 process_frames = True
 
 #cap = cv2.VideoCapture(0)

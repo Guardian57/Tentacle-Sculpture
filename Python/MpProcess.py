@@ -64,7 +64,7 @@ class MpProcess:
         
         #timer for tracking
         self.track_timer_time = time.perf_counter()
-        self.track_timer_duration = 5
+        self.track_timer_duration = 2
         
         #timer so one person doesn't hog it
         self.turn_timer_time = time.perf_counter()
