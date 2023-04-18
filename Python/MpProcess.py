@@ -53,7 +53,7 @@ class MpProcess:
         
         
         #plays animation on startup before doing anything else. "wake up" animation
-        # self.animation.run_animation("left")
+        self.animation.run_animation("left")
         
         #timer for playing animation
         self.anim_timer_time = time.perf_counter()
@@ -83,8 +83,8 @@ class MpProcess:
     
     def process (self):
         
-        motor_top_one = 180; #motors labeled one are on the same side. top and bottom controls. operators right viewers left
-        motor_top_two = 180;
+        motor_top_one = 180 #motors labeled one are on the same side. top and bottom controls. operators right viewers left
+        motor_top_two = 180
         
         maxlim = 640 - 20
         minlim = 0 + 20
@@ -207,13 +207,11 @@ class MpProcess:
                         clamped_v1 = clamp_number(divid_one_low, 2, 1)
                         clamped_v2 = clamp_number(divid_one_high, 4, 1)
                         
-                        
                         divid_two_low = map_range(motor_top_two, 180, 0, 2, 1.5)
                         divid_two_high = map_range(motor_top_two, 180, 0, 4, 10)
                         
                         clamped_v1_1 = clamp_number(divid_two_low, 2, 1)
                         clamped_v2_1 = clamp_number(divid_two_high, 4, 1)
-                        
                         
 #                       #secondary limit which expands the range of bottom section motors based on the positon of the hand on the Y axis. limit is determined by adding a persentage of the range to the current motor postion
                         m_b_1_l2 = motor_bot_one_limit + map_range(self.handPosY, minlimY, maxlimY, motor_bot_one_limit/divid_one_low , -motor_bot_one_limit/divid_one_high)                                                             
@@ -286,14 +284,14 @@ class MpProcess:
                 
                 if time.perf_counter() >= self.anim_timer_time:
                     print('playing animation')
-                    # if self.tracking_start == False:
-                    #     if self.handPos >= 320:
-                    #         self.animation.run_animation("left")
-                    #     else:
-                    #         #play animation
-                    #         self.animation.run_animation("right")
-                    # else:
-                    #     self.animation.run_animation(self.anim_name_string)
+                    if self.tracking_start == False:
+                        if self.handPos >= 320:
+                            self.animation.run_animation("left")
+                        else:
+                            #play animation
+                            self.animation.run_animation("right")
+                    else:
+                        self.animation.run_animation(self.anim_name_string)
                     
                     #reset timer
                     self.anim_timer_time = time.perf_counter() + self.anim_timer_duration
@@ -308,7 +306,7 @@ class MpProcess:
                     
                     bus.write_i2c_block_data(addr,0x07,[0,0,0,0])
                     
-                    time.sleep(15);
+                    time.sleep(15)
                     self.turn_start = True
                     self.endOfSession = False
                     
