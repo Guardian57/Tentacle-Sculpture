@@ -49,16 +49,23 @@ class MpProcess:
         
         #animation Merge variables 
         self.motionAnimToggle = 0 # toggle for switching in between animation and motion tracking mode for each run
+        
+        
+        
         self.animation = AnimationMethods(addr, bus)
         
+        bus.write_i2c_block_data(addr,0x07,[0,0,0,0,2])
+        
+        self.animation.stall()
         
         #plays animation on startup before doing anything else. "wake up" animation
         self.animation.run_animation("left")
         
+        
         #timer for playing animation
         self.anim_timer_time = time.perf_counter()
         self.anim_timer_duration = 20
-        self.anim_name_string = "jake_test"
+        self.anim_name_string = "jaake_test"
         self.tracking_start = True #tells if its the first time through tracking loop
         self.idle_start = True #tells if its the first time through idle loop
         
@@ -319,3 +326,4 @@ class MpProcess:
     
     def stop(self):
         self.stopped = True 
+

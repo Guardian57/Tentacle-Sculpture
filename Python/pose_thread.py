@@ -7,15 +7,18 @@ from MpProcess import MpProcess
 import time
 
 
-show_video = False
+show_video = True
 process_frames = True
 
 #cap = cv2.VideoCapture(0)
-value = input("Please enter starting rotation. If you do not wish to reset, type any letter: ")
+#value = input("Please enter starting rotation. If you do not wish to reset, type any letter: ")
 
-start_rot = None #default start rotation
+
+
+start_rot = 0 #default start rotation
 send_reset = False
 
+'''
 if value.isnumeric():
     print('reseting starting position')
     start_rot = int(value)
@@ -24,7 +27,7 @@ if value.isnumeric():
 value = input("Type 'yes' to start tracking: ")
 if value == 'yes':
     print("calibration complete. starting program...")
-
+'''
 video_getter = VideoGet(0).start()
 
 if process_frames:

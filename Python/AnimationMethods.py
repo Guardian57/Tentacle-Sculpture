@@ -16,19 +16,20 @@ class AnimationMethods:
         
         self.motor_count = 4 # number of motors
         self.maximum_angle = 180 # maximum angle motors can turn
-        self.targets = [90,90,90,90]
+        
+        self.targets = [0, 0, 0, 0]
         
         self.step = 0 # which step of the animation we are on
         self.uptime = time.perf_counter() # the time the program started running
         self.delay = 0 # the delay between commands
         self.current_time = 0
         
-        self.write_data(self.targets) # writing motor data
+        #self.write_data(self.targets) # writing motor data
         
-#         self.stall() # a stall to make sure all calibrations are done
+        self.stall() # a stall to make sure all calibrations are done
         time.sleep(.1)
         #self.write_data([0, 0, 0, 0, 1]); # a reset command to set the new zeroes for the motor
-        print("Animations Ready")
+        print("Animations ready")
 
 
     def stall(self): # a stall to wait for the command to finish before starting a new one
@@ -37,10 +38,10 @@ class AnimationMethods:
             
             try: # waits for the motor status to be empty of bits, meaning the command is finished executing
                 status = self.bus.read_byte(self.address)
-                #print(status)
+                
                 if(status == 1):
                     waiting = False
-                time.sleep(.1) # a small delay to improve stability
+                #time.sleep(.1) # a small delay to improve stability
             except:
                 pass
         pass
@@ -109,8 +110,6 @@ class AnimationMethods:
                 
         self.moving = False # the animation is complete
         print()
-        
-   
 
 
     def write_data(self, value): # writes the command to the arduino

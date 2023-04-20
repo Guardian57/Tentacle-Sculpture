@@ -43,7 +43,8 @@ AccelStepper stepper[M_NUM];
 MultiStepper steppers;
 
 //temporary holding array for info set over i2c
-byte dataArray[3];
+// NOTE: WAS 3, changing to 5 removed warning, may break. 
+byte dataArray[5];
 
 int cntrM = 0; //the current manually controlled motor
 boolean isPress = false;
