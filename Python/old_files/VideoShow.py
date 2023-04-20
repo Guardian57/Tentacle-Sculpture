@@ -18,9 +18,9 @@ class VideoShow:
         while not self.stopped:
             cv2.imshow("Video", self.frame)
             if cv2.waitKey(1) == ord("q"):
+                #cv2.destroyWindow("Video")
                 self.stopped = True
-            
-
+                
     def stop(self):
         self.stopped = True
 
