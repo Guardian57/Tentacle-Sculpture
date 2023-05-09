@@ -138,10 +138,11 @@ void receiveEvent(int howMany) { // triggers when pi sends a command
               
               setShaftPos(i, 0);
               prevHalls[i] = halls[i];
+              pulse(i,360);
               }
            
-            int temp[] = {360,360,360,360};
-            pulse(0,temp);
+            
+            
             
             
             homing = true;
@@ -152,12 +153,12 @@ void receiveEvent(int howMany) { // triggers when pi sends a command
               Serial.println("sending motor position");
               manualCntr = false; // TEMPORARY FIX FOR MANUALS NOT SWITCHING OFF
               for(int i = 1; i <= M_NUM; i++){
-                  degs[i-1] = dataArray[i]; // reads the angles sent through pi
+                  //degs[i-1] = dataArray[i]; // reads the angles sent through pi
                   //Serial.println( i + ": " + String(dataArray[i]));
-                  
+                  pulse(i-1, dataArray[i]); // command to set motor targets
                 }
               
-              pulse(0, degs); // command to set motor targets
+              
             }
 
           
@@ -165,18 +166,18 @@ void receiveEvent(int howMany) { // triggers when pi sends a command
       }
   }
 
-void pulse(int stpr, int deg[]){
+void pulse(int stpr, int deg){
       
       //converts degrees into pulses factoring in micro steps
       float pulseDeg = 360.0f/ppr;
       
-      for(int i = 0; i < M_NUM; i++){
-           positions[i] = deg[i]/pulseDeg; // calculates the new position based on degrees
+     
+           positions[stpr] = deg/pulseDeg; // calculates the new position based on degrees
            //Serial.println(String(i) + ": " + positions[i]);
-        }
+       
         
       
-      moveStep(); // moves a step
+      moveStep(stpr); // moves a step
         
     }
 
@@ -204,12 +205,12 @@ void setShaftPos(int stepr, int current) { // sets the current pos of the steppe
       Serial.println("Stepper " + String(stepr) + " current Pos set to " + String(current));
   }
 
-void moveStep(){ // moves the motors
+void moveStep(int stpr){ // moves the motors
   //Serial.println("Move step");
-    for(int i = 0; i < M_NUM; i++) {
-        stepper[i].moveTo(positions[i]);
+    
+        stepper[stpr].moveTo(positions[stpr]);
         //Serial.println("Move motor " + String(i));
-      }
+      
   }
 
 void homeMotors() {
