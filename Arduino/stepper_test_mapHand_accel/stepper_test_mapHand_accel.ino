@@ -79,8 +79,8 @@ void setup() {
     
     // configure stepper
     // acceleration must be set before speed
-    stepper[i].setMaxSpeed(10000);
-    stepper[i].setAcceleration(5000);
+    stepper[i].setMaxSpeed(5000);
+    stepper[i].setAcceleration(2000);
     //stepper[i].setSpeed(2000);
     
     //add stepper to MultiStepper
@@ -137,11 +137,10 @@ void receiveEvent(int howMany) { // triggers when pi sends a command
             for(int i = 0; i < M_NUM; i++){
               
               setShaftPos(i, 0);
-              prevHalls[i] = halls[i];
-              pulse(i,360);
+              
               }
-           
-            
+              homeStepIndex = 0;
+              pulse(homeStepIndex,360);
             
             
             
@@ -230,28 +229,51 @@ void homeMotors() {
     halls[3] = digitalRead(hall3);
     //Serial.print(halls[3]);
     //Serial.println();
-
+    
     // sets homing to false, then resets it to true if any motor still needs to move
     // so that homing loop will run again
-    
-    
-    for(int i = 0; i < 4; i++){
-
-      //Serial.println("stepper" + String(i) + " has " + String(stepper[i].distanceToGo()) + " to go ");
+    if(halls[homeStepIndex] == 0){
+        setShaftPos(homeStepIndex, 90 + offsets[homeStepIndex]);
+        Serial.println("how many times is this playing");
+        stepper[homeStepIndex].stop();
+        
+        
+        if(homeStepIndex < 3){ 
       
-      if(halls[i] != prevHalls[i]){
-        setShaftPos(i, 90 + offsets[i]);
-        stepper[i].stop();
-        //stepper[i].moveTo(90 + offsets[i]); // runs the motor by the set speed
+          homeStepIndex += 1;
+          pulse(homeStepIndex,360);
+          
+          } else {
+
+            for(int i = 0; i < M_NUM; i++){
+              stepper[i].setMaxSpeed(7000);
+              stepper[i].setAcceleration(5000);
+              }
+              Serial.println("all motors homed. proceed to checkout");
+              homing = false;
+              Serial.println("hit");
+            }
+        
+        
       }
-      prevHalls[i] = halls[i];
-    }
+    
+//    for(int i = 0; i < 4; i++){
+//
+//      //Serial.println("stepper" + String(i) + " has " + String(stepper[i].distanceToGo()) + " to go ");
+//      
+//      if(halls[i] != prevHalls[i]){
+//        setShaftPos(i, 90 + offsets[i]);
+//        stepper[i].stop();
+//        //stepper[i].moveTo(90 + offsets[i]); // runs the motor by the set speed
+//      }
+//      prevHalls[i] = halls[i];
+//    }
 //    
     //Serial.println(String(halls[0]) + ", " + String(halls[1]) + ", " + String(halls[2]) + ", " + String(halls[3]));
-    if(halls[0] == 0 && halls[1] == 0 && halls[2] == 0 && halls[3] == 0) {
-      homing = false; 
-      Serial.println("hit");
-    }
+//    if(halls[0] == 0 && halls[1] == 0 && halls[2] == 0 && halls[3] == 0) {
+//       
+//      Serial.println("hit");
+//    }
     
        
     if(!homing){ // sets the shaft locations once homed
