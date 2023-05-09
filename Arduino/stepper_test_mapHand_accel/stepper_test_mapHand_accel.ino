@@ -109,6 +109,7 @@ void setup() {
   
 }
 
+
 void receiveEvent(int howMany) { // triggers when pi sends a command
     
     int degs[M_NUM]; 
@@ -136,11 +137,12 @@ void receiveEvent(int howMany) { // triggers when pi sends a command
             Serial.println("Sending Home motors"); 
             for(int i = 0; i < M_NUM; i++){
               
-              setShaftPos(i, 0);
+              setShaftPos(i, 0); // sets motor position to 0 so it will spin 360 from current location
               
               }
+              setAllSpeed(5000, 2000); //slows the motor for homing to prevent seizing 
               homeStepIndex = 0;
-              pulse(homeStepIndex,360);
+              pulse(homeStepIndex,360); //spin the first motor 360 degrees to find the hall sensor
             
             
             
@@ -212,6 +214,13 @@ void moveStep(int stpr){ // moves the motors
       
   }
 
+void setAllSpeed(int speedMax, int Accel) { //sets all motor speed and acceleration
+    for (int i = 0; i < M_NUM; i++) {
+        stepper[i].setMaxSpeed(speedMax);
+        stepper[i].setAcceleration(Accel);
+      }
+  }
+
 void homeMotors() {
 
     // uncommenting the print statements will slow down motors
@@ -245,10 +254,9 @@ void homeMotors() {
           
           } else {
 
-            for(int i = 0; i < M_NUM; i++){
-              stepper[i].setMaxSpeed(7000);
-              stepper[i].setAcceleration(5000);
-              }
+            
+              setAllSpeed(7000, 5000); //sets motor speed and accel 
+              
               Serial.println("all motors homed. proceed to checkout");
               homing = false;
               Serial.println("hit");
