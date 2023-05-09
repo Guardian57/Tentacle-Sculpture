@@ -18,6 +18,7 @@
 #define hall2 A1
 #define hall3 A2
 byte halls[] = {1, 1, 1, 1}; // the state of the hall effect senseor. 0 = magnet detected
+byte prevHalls[4] = {1, 1, 1, 1};
 
 int offsets[] = {0, 0, 0, -10}; //offset angles to account for sensitive hall sensors
 
@@ -80,7 +81,7 @@ void setup() {
     // acceleration must be set before speed
     stepper[i].setMaxSpeed(10000);
     stepper[i].setAcceleration(5000);
-    stepper[i].setSpeed(2000);
+    //stepper[i].setSpeed(2000);
     
     //add stepper to MultiStepper
     steppers.addStepper(stepper[i]);
@@ -134,9 +135,15 @@ void receiveEvent(int howMany) { // triggers when pi sends a command
           if (dataArray[0] == 9) { // triggers to home motors
             Serial.println("Sending Home motors"); 
             for(int i = 0; i < M_NUM; i++){
-              stepper[i].setSpeed(2000);
-              //stepper[i].run();
+              
+              setShaftPos(i, 0);
+              prevHalls[i] = halls[i];
               }
+           
+            int temp[] = {360,360,360,360};
+            pulse(0,temp);
+            
+            
             homing = true;
           }  
             
@@ -225,18 +232,19 @@ void homeMotors() {
 
     // sets homing to false, then resets it to true if any motor still needs to move
     // so that homing loop will run again
-    if(halls[homeStepIndex%4] != 0){
-      stepper[homeStepIndex%4].runSpeed();
-      } else {
-        homeStepIndex += 1;
-        }
     
-//    for(int i = 0; i < 4; i++){
-//      if(halls[i] != 0){
-//        stepper[i].runSpeed(); // runs the motor by the set speed
-//      }
-//
-//    }
+    
+    for(int i = 0; i < 4; i++){
+
+      //Serial.println("stepper" + String(i) + " has " + String(stepper[i].distanceToGo()) + " to go ");
+      
+      if(halls[i] != prevHalls[i]){
+        setShaftPos(i, 90 + offsets[i]);
+        stepper[i].stop();
+        //stepper[i].moveTo(90 + offsets[i]); // runs the motor by the set speed
+      }
+      prevHalls[i] = halls[i];
+    }
 //    
     //Serial.println(String(halls[0]) + ", " + String(halls[1]) + ", " + String(halls[2]) + ", " + String(halls[3]));
     if(halls[0] == 0 && halls[1] == 0 && halls[2] == 0 && halls[3] == 0) {
@@ -247,10 +255,7 @@ void homeMotors() {
        
     if(!homing){ // sets the shaft locations once homed
       // 90 to ensure straight up and down with drilled holes
-      setShaftPos(0, 90 + offsets[0]);
-      setShaftPos(1, 90 + offsets[1]);
-      setShaftPos(2, 90 + offsets[2]);
-      setShaftPos(3, 90 + offsets[3]);
+      
       isProcessing = false;
     }
 }
@@ -262,7 +267,7 @@ void loop() {
     if(homing == true){
       homeMotors();   
      }
-    else{
+    
     
       if(digitalRead(MOTOR_TOGGLE)==HIGH and isPress == false){ //switch motors for manual control
           cntrM = (cntrM + 1) % M_NUM;
@@ -298,7 +303,7 @@ void loop() {
 //        }
        
 
-    }
+    
      
     
 }
