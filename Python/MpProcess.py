@@ -40,9 +40,12 @@ class MpProcess:
     def __init__(self, reset, curPos, frame=None):
         
         self.currentPos = curPos
-        
+         
         if reset:
             bus.write_i2c_block_data(addr,0x00,[curPos])
+
+        
+        
         
         self.frame = frame
         self.image = frame
@@ -53,10 +56,19 @@ class MpProcess:
         self.motionAnimToggle = 0 # toggle for switching in between animation and motion tracking mode for each run
         self.animation = AnimationMethods(addr, bus)
         
-        
+        '''
+        self.animation.run_animation("nine-d")
+        while(True):
+            pass
+        '''
+        # bus.write_i2c_block_data(addr,0x09,[curPos])
+        #time.sleep(5)
+        # while(bus.read_byte(addr)):
+        #     pass
+
         #plays animation on startup before doing anything else. "wake up" animation
         self.animation.run_animation("left")
-        
+        print("yo")
         #timer for playing animation
         self.anim_timer = Timer(30)
 #         self.anim_timer_time = time.perf_counter()

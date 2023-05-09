@@ -16,14 +16,14 @@ class AnimationMethods:
         
         self.motor_count = 4 # number of motors
         self.maximum_angle = 180 # maximum angle motors can turn
-        self.targets = [90,90,90,90]
+        self.targets = [90,95,90,90]
         
         self.step = 0 # which step of the animation we are on
         self.uptime = time.perf_counter() # the time the program started running
         self.delay = 0 # the delay between commands
         self.current_time = 0
         
-        self.write_data(self.targets) # writing motor data
+        #self.write_data(self.targets) # writing motor data
         
 #         self.stall() # a stall to make sure all calibrations are done
         time.sleep(.1)
