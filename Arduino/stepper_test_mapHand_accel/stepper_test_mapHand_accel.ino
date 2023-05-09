@@ -221,7 +221,7 @@ void homeMotors() {
     // sets homing to false, then resets it to true if any motor still needs to move
     // so that homing loop will run again
     
-    
+    homing = false;
     for(int i = 0; i < 4; i++){
       if(halls[i] != 0){
         stepper[i].runSpeed(); // runs the motor by the set speed
