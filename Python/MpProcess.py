@@ -61,13 +61,14 @@ class MpProcess:
         while(True):
             pass
         '''
-        # bus.write_i2c_block_data(addr,0x09,[curPos])
-        #time.sleep(5)
+        bus.write_i2c_block_data(addr,0x09,[1])
+        time.sleep(30)
+        bus.write_i2c_block_data(addr,0x07,[0,0,0,0])
         # while(bus.read_byte(addr)):
         #     pass
 
         #plays animation on startup before doing anything else. "wake up" animation
-        self.animation.run_animation("left")
+        #self.animation.run_animation("left")
         print("yo")
         #timer for playing animation
         self.anim_timer = Timer(30)

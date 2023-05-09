@@ -17,7 +17,7 @@
 #define hall1 A3
 #define hall2 A1
 #define hall3 A2
-int halls[] = {1, 1, 1, 1}; // the state of the hall effect senseor. 0 = magnet detected
+byte halls[] = {1, 1, 1, 1}; // the state of the hall effect senseor. 0 = magnet detected
 
 int offsets[] = {0, 0, 0, -10}; //offset angles to account for sensitive hall sensors
 
@@ -45,7 +45,7 @@ int ppr = 400; //pulse per revolution based on stepper driver
 int gearBoxRatio = 15; //gearbox ratio, how many revolutions of stepper it takes to move gearbox shaft 360 deg
 int mSteps = 1; //amout of steps to move based on ppr. default 1
 float pulseDeg = 1.8;
-
+byte homeStepIndex = 0;
 
 boolean isProcessing = true; // whether or not the arduino is processing a command
 boolean homing = false; // whether the ardunio is homing the sensors
@@ -80,7 +80,7 @@ void setup() {
     // acceleration must be set before speed
     stepper[i].setMaxSpeed(10000);
     stepper[i].setAcceleration(5000);
-    stepper[i].setSpeed(5000);
+    stepper[i].setSpeed(2000);
     
     //add stepper to MultiStepper
     steppers.addStepper(stepper[i]);
@@ -123,7 +123,7 @@ void receiveEvent(int howMany) { // triggers when pi sends a command
           if(dataArray[0] == 0){ // sets motor locations to zero if data array starts with zero
             //is not moving the motors, instead is changing the label of their location
             //set starting position
-            Serial.println("starting Position");
+            Serial.println("sending start position");
             for(int i = 0; i < M_NUM; i++){
               setShaftPos(i , dataArray[1]);
               }
@@ -132,12 +132,17 @@ void receiveEvent(int howMany) { // triggers when pi sends a command
             }
 
           if (dataArray[0] == 9) { // triggers to home motors
-            Serial.println("Home motors"); 
+            Serial.println("Sending Home motors"); 
+            for(int i = 0; i < M_NUM; i++){
+              stepper[i].setSpeed(2000);
+              //stepper[i].run();
+              }
             homing = true;
           }  
             
 
           if(dataArray[0] == 7){ // in charge of moving the motors
+              Serial.println("sending motor position");
               manualCntr = false; // TEMPORARY FIX FOR MANUALS NOT SWITCHING OFF
               for(int i = 1; i <= M_NUM; i++){
                   degs[i-1] = dataArray[i]; // reads the angles sent through pi
@@ -205,7 +210,7 @@ void homeMotors() {
     // uncommenting the print statements will slow down motors
     // should only be done to bug test hall effect sensors
 
-     
+    
     // reads hall effect sensors
     //Serial.println("homing");
     halls[0] = digitalRead(hall0);
@@ -220,14 +225,23 @@ void homeMotors() {
 
     // sets homing to false, then resets it to true if any motor still needs to move
     // so that homing loop will run again
+    if(halls[homeStepIndex%4] != 0){
+      stepper[homeStepIndex%4].runSpeed();
+      } else {
+        homeStepIndex += 1;
+        }
     
-    homing = false;
-    for(int i = 0; i < 4; i++){
-      if(halls[i] != 0){
-        stepper[i].runSpeed(); // runs the motor by the set speed
-        homing = true;
-        
-      }
+//    for(int i = 0; i < 4; i++){
+//      if(halls[i] != 0){
+//        stepper[i].runSpeed(); // runs the motor by the set speed
+//      }
+//
+//    }
+//    
+    //Serial.println(String(halls[0]) + ", " + String(halls[1]) + ", " + String(halls[2]) + ", " + String(halls[3]));
+    if(halls[0] == 0 && halls[1] == 0 && halls[2] == 0 && halls[3] == 0) {
+      homing = false; 
+      Serial.println("hit");
     }
     
        
@@ -268,12 +282,12 @@ void loop() {
           stepper[cntrM].move(-mSteps);
        }
   
-       if(manualCntr){
-          stepper[cntrM].run();
-       }
-       
-       
-       else { 
+//       if(manualCntr){
+//          stepper[cntrM].run();
+//       }
+//       
+//       
+//       else { 
           for(int i = 0; i < M_NUM; i++) { // runs the motors to the target sent by pi
             stepper[i].run();
             //Serial.println("running");
@@ -281,7 +295,7 @@ void loop() {
           if(stepper[0].distanceToGo() == 0 && stepper[1].distanceToGo() == 0 && stepper[2].distanceToGo() == 0 && stepper[3].distanceToGo() == 0){
             isProcessing = false; //checks if motors have reached target and stops processing if yes
           }
-        }
+//        }
        
 
     }
