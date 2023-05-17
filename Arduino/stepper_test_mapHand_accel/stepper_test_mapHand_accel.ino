@@ -59,9 +59,9 @@ MultiStepper steppers;
 //temporary holding array for info set over i2c
 byte dataArray[5]; //changed this to 5 to remove warnings
 
-int cntrM = 0; //the current manually controlled motor
+int cntrM = 0; //motor that is being manually controlled
 boolean isPress = false;
-boolean manualCntr = true;
+
 
 
 void setup() {
@@ -94,8 +94,6 @@ void setup() {
   pinMode (CCW_BUTT, INPUT);
   pinMode (MOTOR_TOGGLE, INPUT);
   
-  
-  
   Wire.begin(0x8);
 
   Wire.onReceive(receiveEvent);
@@ -121,7 +119,7 @@ void receiveEvent(int howMany) { // triggers when pi sends a command
             dataArray[i] = Wire.read(); // reads the information sent by pi
             //Serial.println(dataArray[i]);
           }
-          //I THINK THIS IS BUSTED THIS WAS NOT TRIGGERING
+          
           if(dataArray[0] == 0){ // sets motor locations to zero if data array starts with zero
             //is not moving the motors, instead is changing the label of their location
             //set starting position
@@ -129,7 +127,7 @@ void receiveEvent(int howMany) { // triggers when pi sends a command
             for(int i = 0; i < M_NUM; i++){
               setShaftPos(i , dataArray[1]);
               }
-            manualCntr = false;
+            
 
             }
 
@@ -152,18 +150,15 @@ void receiveEvent(int howMany) { // triggers when pi sends a command
 
           if(dataArray[0] == 7){ // in charge of moving the motors
               Serial.println("sending motor position");
-              manualCntr = false; // TEMPORARY FIX FOR MANUALS NOT SWITCHING OFF
+              
               for(int i = 1; i <= M_NUM; i++){
                   //degs[i-1] = dataArray[i]; // reads the angles sent through pi
                   //Serial.println( i + ": " + String(dataArray[i]));
                   pulse(i-1, dataArray[i]); // command to set motor targets
                 }
               
-              
             }
 
-          
-        
       }
   }
 
@@ -226,7 +221,6 @@ void homeMotors() {
     // uncommenting the print statements will slow down motors
     // should only be done to bug test hall effect sensors
 
-    
     // reads hall effect sensors
     //Serial.println("homing");
     halls[0] = digitalRead(hall0);
@@ -246,7 +240,6 @@ void homeMotors() {
         Serial.println("how many times is this playing");
         stepper[homeStepIndex].stop();
         
-        
         if(homeStepIndex < 3){ 
       
           homeStepIndex += 1;
@@ -254,12 +247,12 @@ void homeMotors() {
           
           } else {
 
-            
               setAllSpeed(7000, 5000); //sets motor speed and accel 
               
               Serial.println("all motors homed. proceed to checkout");
               homing = false;
               Serial.println("hit");
+              
             }
         
         
