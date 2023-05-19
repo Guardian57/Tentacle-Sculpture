@@ -41,7 +41,6 @@ int stepperInfo[][3] = {{700, 100, 0},
 // current motor posistion
 long positions[M_NUM];
 
-
 int ppr = 400; //pulse per revolution based on stepper driver
 int gearBoxRatio = 15; //gearbox ratio, how many revolutions of stepper it takes to move gearbox shaft 360 deg
 int mSteps = 1; //amout of steps to move based on ppr. default 1
@@ -107,9 +106,7 @@ void setup() {
   pulseDeg = 360.0f/ppr;
   mSteps = pulseDeg*1000;
 
-  
 }
-
 
 void receiveEvent(int howMany) { // triggers when pi sends a command
     
@@ -143,11 +140,11 @@ void receiveEvent(int howMany) { // triggers when pi sends a command
               }
               
               
-              homeStepIndex = 0;
+              homeStepIndex = 0; //sets the index of the stepper being homed
               
-              homingState = 10;
+              homingState = 0; //sets the initial state of the stepper motor for the switch statment below
               
-              prevHalls[homeStepIndex] = halls[homeStepIndex];
+              prevHalls[homeStepIndex] = halls[homeStepIndex]; //sets the current and previous positions to the same so nothing is triggered imediatly 
               
               setAllSpeed(2000, 10000); //slows the motor for homing to prevent seizing 
               pulse(homeStepIndex,405); //spin the first motor 360 degrees to find the hall sensor
@@ -232,165 +229,108 @@ void homeMotors() {
     // should only be done to bug test hall effect sensors
 
     // reads hall effect sensors
-    //Serial.println("homing");
+    
     halls[0] = digitalRead(hall0);
-    //Serial.print(halls[0]);
     halls[1] = digitalRead(hall1);
-    //Serial.print(halls[1]);
     halls[2] = digitalRead(hall2);
-    //Serial.print(halls[2]);
     halls[3] = digitalRead(hall3);
-    //Serial.print(halls[3]);
-    //Serial.println();
-
     
     
     switch (homingState){
-      case 10: 
+      case 0: //sees if the hall-effect is already in the homing zone 
       
-      if(halls[homeStepIndex] != 0) {
-                  homingState = 0;
-                  Serial.println("not active");
-                } else {
-                  homingState = 3;
-                  Serial.println("already active");
-                  }
-      
-      break;
-      
-      case 0:
-      if(halls[homeStepIndex] != prevHalls[homeStepIndex]) {
-        enterPos = stepper[homeStepIndex].currentPosition();
-        Serial.println("set enter point");
-        homingState = 1;
-        
+        if(halls[homeStepIndex] != 0) {          
+          homingState = 1;
+          Serial.println("Outside Homing Range");
+        } else {
+          homingState = 3;
+          Serial.println("Inside Homing Range");
         }
+      
       break;
-      case 1:
-      if(halls[homeStepIndex] != prevHalls[homeStepIndex]) {
-        exitPos = stepper[homeStepIndex].currentPosition();
-        Serial.println("set exit point");
-        stepper[homeStepIndex].stop();
-        int center = exitPos - (abs(exitPos - enterPos)/2);
-        stepper[homeStepIndex].moveTo(center);
-        homingState = 2;
-        
-        
+      
+      case 1: // looks for entry into the homing zone 
+      
+        if(halls[homeStepIndex] != prevHalls[homeStepIndex]) {          
+          enterPos = stepper[homeStepIndex].currentPosition(); //sets the entry position
+          Serial.println("set enter point");
+          homingState = 2; // changes to next state on next loop iteration 
+        }
+      
+      break;
+      
+      case 2: // looks for exit of the homing zone
+      
+        if(halls[homeStepIndex] != prevHalls[homeStepIndex]) {
+          exitPos = stepper[homeStepIndex].currentPosition(); //sets the exit position
+          Serial.println("set exit point");
+          stepper[homeStepIndex].stop(); // stops the motor as quickly as possible (with acceleration)
+          int center = exitPos - (abs(exitPos - enterPos)/2); //finds the half of the difference of the entry and exit positions and subtracts it from the exit position to find the center of the magnetic field
+          stepper[homeStepIndex].moveTo(center); // moves to the center position
+          homingState = 10; //changes to next state on next loop iteration
         }
  
       break;
 
-      case 2:
-      if( stepper[homeStepIndex].distanceToGo() == 0){
-          Serial.println("stepper home");
-          setShaftPos(homeStepIndex, 90);
-          homingState = 5;
-          }
-      break;
-
-      case 3:
+      case 3: //looks for the end position first (since already within homing zone)
       
       if(halls[homeStepIndex] > prevHalls[homeStepIndex]){
-        Serial.println(halls[homeStepIndex]);
-        Serial.println(prevHalls[homeStepIndex]);
-        exitPos = stepper[homeStepIndex].currentPosition();
+        exitPos = stepper[homeStepIndex].currentPosition(); //sets the exit position
         Serial.println("found end pos");
-        homingState = 4;
-        stepper[homeStepIndex].stop();
-        pulse(homeStepIndex,-405); 
-        
+        stepper[homeStepIndex].stop(); // stops the motor as quickly as possible (with acceleration)
+        pulse(homeStepIndex,-405); //starts rotating motor CCW to prepare to find enter position
+        homingState = 4; //changes to next state on next loop iteration
         }
-        //prevHalls[homeStepIndex] = halls[homeStepIndex];
+        
       break;
 
       case 4:
-        if(halls[homeStepIndex] > prevHalls[homeStepIndex]){
-//          triggerNum += 1;
-//          if(triggerNum >= 2) {
-        enterPos = stepper[homeStepIndex].currentPosition();
-        stepper[homeStepIndex].stop();
-         Serial.println("found enter Pos");
-        int center = exitPos - (abs(exitPos - enterPos)/2);
-        stepper[homeStepIndex].moveTo(center);
-        homingState = 2;
-        triggerNum = 0;
+      
+        if(halls[homeStepIndex] > prevHalls[homeStepIndex]){    
+        enterPos = stepper[homeStepIndex].currentPosition();//sets the enter position
+        Serial.println("found enter Pos");
+        stepper[homeStepIndex].stop(); // stops the motor as quickly as possible (with acceleration)
+        int center = exitPos - (abs(exitPos - enterPos)/2); //finds the half of the difference of the entry and exit positions and subtracts it from the exit position to find the center of the magnetic field
+        stepper[homeStepIndex].moveTo(center); // moves to the center position
+        homingState = 10; //changes to next state on next loop iteration
         }
-       // prevHalls[homeStepIndex] = halls[homeStepIndex];
-//        }
-        
+       
       break;
 
-      case 5:
-        if(homeStepIndex < 3){ 
-          Serial.println("next Motor");
-          homeStepIndex += 1;
-          homingState = 10;
-          pulse(homeStepIndex,405);
-        } else {
-              
-              setAllSpeed(7000, 10000); //sets motor speed and accel 
-              
-              Serial.println("all motors homed. proceed to checkout");
-              homing = false;
-              Serial.println("hit");
-              
-          }
+      case 10: // waits for stepper to arrive at center before setting 0 position
+        
+        if( stepper[homeStepIndex].distanceToGo() == 0){
+            setShaftPos(homeStepIndex, 90); //sets home position to desired value
+            Serial.println("stepper home");
+            homingState = 11; //changes to next state on next loop iteration
+        }
+        
       break;
+      
+      case 11: // moves on to next motor and if all are homed, ends homing
+        
+        if(homeStepIndex < 3){ 
+          homeStepIndex += 1; // changes index to next motor
+          Serial.println("next Motor");
+          homingState = 0; // goes back to original homing state
+          pulse(homeStepIndex,405); //turns the motor CW to prepare for homing
+        } else {    
+          setAllSpeed(7000, 7000); //sets motor speed and accel 
+          Serial.println("all motors homed. proceed to checkout");
+          homing = false; //ends homing 
+          isProcessing = false;
+          Serial.println("hit");    
+        }
+        
+      break;
+      
       default:
 
       break;
       
       }
       
-      prevHalls[homeStepIndex] = halls[homeStepIndex];
-      
-//    if(halls[homeStepIndex] == 0){
-//        setShaftPos(homeStepIndex, 90 + offsets[homeStepIndex]);
-//        Serial.println("how many times is this playing");
-//        stepper[homeStepIndex].stop();
-//        
-//        if(homeStepIndex < 3){ 
-//      
-//          homeStepIndex += 1;
-//          pulse(homeStepIndex,360);
-//          
-//          } else {
-//
-//              setAllSpeed(7000, 5000); //sets motor speed and accel 
-//              
-//              Serial.println("all motors homed. proceed to checkout");
-//              homing = false;
-//              Serial.println("hit");
-//              
-//            }
-//        
-//        
-//      }
-    
-//    for(int i = 0; i < 4; i++){
-//
-//      //Serial.println("stepper" + String(i) + " has " + String(stepper[i].distanceToGo()) + " to go ");
-//      
-//      if(halls[i] != prevHalls[i]){
-//        setShaftPos(i, 90 + offsets[i]);
-//        stepper[i].stop();
-//        //stepper[i].moveTo(90 + offsets[i]); // runs the motor by the set speed
-//      }
-//      prevHalls[i] = halls[i];
-//    }
-//    
-    //Serial.println(String(halls[0]) + ", " + String(halls[1]) + ", " + String(halls[2]) + ", " + String(halls[3]));
-//    if(halls[0] == 0 && halls[1] == 0 && halls[2] == 0 && halls[3] == 0) {
-//       
-//      Serial.println("hit");
-//    }
-    
-       
-    if(!homing){ // sets the shaft locations once homed
-      // 90 to ensure straight up and down with drilled holes
-      
-      isProcessing = false;
-    }
+      prevHalls[homeStepIndex] = halls[homeStepIndex]; // updates previous homing position for comparison on next loop iteration
 
     }
     
@@ -433,7 +373,9 @@ void loop() {
             //Serial.println("running");
           }
           if(stepper[0].distanceToGo() == 0 && stepper[1].distanceToGo() == 0 && stepper[2].distanceToGo() == 0 && stepper[3].distanceToGo() == 0){
-            isProcessing = false; //checks if motors have reached target and stops processing if yes
+            if(homing == false){
+              isProcessing = false; //checks if motors have reached target and stops processing if yes
+            }
           }
 //        }
        
