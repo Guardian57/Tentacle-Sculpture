@@ -58,8 +58,6 @@ def putIterationsPerSec(frame, iterations_per_sec):
     
     return frame
 
-
-
 while True:
     
     

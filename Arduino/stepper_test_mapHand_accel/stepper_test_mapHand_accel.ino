@@ -108,6 +108,13 @@ void setup() {
 
 }
 
+void setAllSpeed(int speedMax, int Accel) { //sets all motor speed and acceleration
+    for (int i = 0; i < M_NUM; i++) {
+        stepper[i].setMaxSpeed(speedMax);
+        stepper[i].setAcceleration(Accel);
+      }
+  }
+
 void receiveEvent(int howMany) { // triggers when pi sends a command
     
     int degs[M_NUM]; 
@@ -166,6 +173,26 @@ void receiveEvent(int howMany) { // triggers when pi sends a command
               
             }
 
+          if(dataArray[0] == 8){ // in charge of moving the motors for animation
+
+              setAllSpeed(dataArray[5] * 100,dataArray[6] * 100); // sets the speed and accel for each new position
+              
+              for(int i = 1; i <= M_NUM; i++){
+                  //degs[i-1] = dataArray[i]; // reads the angles sent through pi
+                  //Serial.println( i + ": " + String(dataArray[i]));
+                  pulse(i-1, dataArray[i]); // command to set motor targets
+                }
+              
+            }  
+
+            if(dataArray[0] == 10){ // in charge of changing speed of motors
+              Serial.println("changed Speed");
+              setAllSpeed(dataArray[1] * 100, dataArray[2] * 100); // sets the speed and accel for each new position
+              
+              
+              
+            }  
+
       }
   }
 
@@ -216,12 +243,7 @@ void moveStep(int stpr){ // moves the motors
       
   }
 
-void setAllSpeed(int speedMax, int Accel) { //sets all motor speed and acceleration
-    for (int i = 0; i < M_NUM; i++) {
-        stepper[i].setMaxSpeed(speedMax);
-        stepper[i].setAcceleration(Accel);
-      }
-  }
+
 
 void homeMotors() {
 

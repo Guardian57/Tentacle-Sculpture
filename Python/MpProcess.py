@@ -72,7 +72,7 @@ class MpProcess:
         #     pass
 
         #plays animation on startup before doing anything else. "wake up" animation
-        #self.animation.run_animation("left")
+        self.animation.run_animation("left")
         print("yo")
         #timer for playing animation
         self.anim_timer = Timer(30)
@@ -97,6 +97,7 @@ class MpProcess:
         self.glitch_timer = Timer(5)
 #         self.glitch_timer_time = time.perf_counter()
 #         self.glitch_timer_duration = 5
+        
         
     
     def start (self):
