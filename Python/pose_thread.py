@@ -21,17 +21,10 @@ signal.signal(signal.SIGTSTP, sig_handler)
 show_video = False
 process_frames = True
 
-
 #cap = cv2.VideoCapture(0)
-value = input("Please enter starting rotation. If you do not wish to reset, type any letter: ")
 
 start_rot = None #default start rotation
 send_reset = False
-
-if value.isnumeric():
-    print('reseting starting position')
-    start_rot = int(value)
-    send_reset = True
 
 value = input("Type 'yes' to start tracking: ")
 if value == 'yes':
@@ -41,7 +34,7 @@ video_getter = VideoGet(1).start()
 
 if process_frames:
     
-    video_process = MpProcess(send_reset, start_rot, video_getter.frame).start()
+    video_process = MpProcess( start_rot, video_getter.frame).start()
     
 if show_video:
     
@@ -53,7 +46,7 @@ if show_video:
 
 # print('setting current pos ' + str(MpProcess.currentPos))
 
-def putIterationsPerSec(frame, iterations_per_secS):
+def putIterationsPerSec(frame, iterations_per_sec):
     """
     Add iterations per second text to lower-left corner of a frame.
     """

@@ -37,12 +37,11 @@ class MpProcess:
 
 
       
-    def __init__(self, reset, curPos, frame=None):
+    def __init__(self, curPos, frame=None):
         
         self.currentPos = curPos
          
-        if reset:
-            bus.write_i2c_block_data(addr,0x00,[curPos])
+        
 
         
         
@@ -61,10 +60,14 @@ class MpProcess:
         while(True):
             pass
         '''
-        time.sleep(5)
+        time.sleep(1)
         bus.write_i2c_block_data(addr,0x09,[1])
-        time.sleep(20)
         
+        while(bus.read_byte(addr) == 0):
+            pass
+        
+        time.sleep(1)
+
         # while(bus.read_byte(addr)):
         #     pass
 
