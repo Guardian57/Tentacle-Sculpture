@@ -61,6 +61,7 @@ class MpProcess:
         while(True):
             pass
         '''
+        time.sleep(5)
         bus.write_i2c_block_data(addr,0x09,[1])
         time.sleep(20)
         

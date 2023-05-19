@@ -62,7 +62,10 @@ byte dataArray[5]; //changed this to 5 to remove warnings
 int cntrM = 0; //motor that is being manually controlled
 boolean isPress = false;
 
-
+byte homingState = 0; //the current homing state of the motor. 0 - searching for hall enter, 1 - searching for hall exit
+int enterPos = NULL;
+int exitPos = NULL;
+byte triggerNum = 0; // number of times the hall effect has entered or exited the sensor
 
 void setup() {
   Serial.begin(9600);
@@ -80,7 +83,7 @@ void setup() {
     // configure stepper
     // acceleration must be set before speed
     stepper[i].setMaxSpeed(5000);
-    stepper[i].setAcceleration(2000);
+    stepper[i].setAcceleration(5000);
     //stepper[i].setSpeed(2000);
     
     //add stepper to MultiStepper
@@ -138,18 +141,25 @@ void receiveEvent(int howMany) { // triggers when pi sends a command
               setShaftPos(i, 0); // sets motor position to 0 so it will spin 360 from current location
               
               }
-              setAllSpeed(5000, 2000); //slows the motor for homing to prevent seizing 
+              
+              
               homeStepIndex = 0;
-              pulse(homeStepIndex,360); //spin the first motor 360 degrees to find the hall sensor
+              
+              homingState = 10;
+              
+              prevHalls[homeStepIndex] = halls[homeStepIndex];
+              
+              setAllSpeed(2000, 10000); //slows the motor for homing to prevent seizing 
+              pulse(homeStepIndex,405); //spin the first motor 360 degrees to find the hall sensor
             
             
             
-            homing = true;
+              homing = true;
           }  
             
 
           if(dataArray[0] == 7){ // in charge of moving the motors
-              Serial.println("sending motor position");
+              
               
               for(int i = 1; i <= M_NUM; i++){
                   //degs[i-1] = dataArray[i]; // reads the angles sent through pi
@@ -185,7 +195,7 @@ void sendState(){
           //Serial.println("Busy");
         } else if (!isProcessing) {
           num = 0x01; // arduino is not busy
-          Serial.println("Not busy");
+          //Serial.println("Not busy");
           }
       
       Wire.write(num);
@@ -232,31 +242,130 @@ void homeMotors() {
     halls[3] = digitalRead(hall3);
     //Serial.print(halls[3]);
     //Serial.println();
-    
-    // sets homing to false, then resets it to true if any motor still needs to move
-    // so that homing loop will run again
-    if(halls[homeStepIndex] == 0){
-        setShaftPos(homeStepIndex, 90 + offsets[homeStepIndex]);
-        Serial.println("how many times is this playing");
-        stepper[homeStepIndex].stop();
-        
-        if(homeStepIndex < 3){ 
-      
-          homeStepIndex += 1;
-          pulse(homeStepIndex,360);
-          
-          } else {
 
-              setAllSpeed(7000, 5000); //sets motor speed and accel 
+    
+    
+    switch (homingState){
+      case 10: 
+      
+      if(halls[homeStepIndex] != 0) {
+                  homingState = 0;
+                  Serial.println("not active");
+                } else {
+                  homingState = 3;
+                  Serial.println("already active");
+                  }
+      
+      break;
+      
+      case 0:
+      if(halls[homeStepIndex] != prevHalls[homeStepIndex]) {
+        enterPos = stepper[homeStepIndex].currentPosition();
+        Serial.println("set enter point");
+        homingState = 1;
+        
+        }
+      break;
+      case 1:
+      if(halls[homeStepIndex] != prevHalls[homeStepIndex]) {
+        exitPos = stepper[homeStepIndex].currentPosition();
+        Serial.println("set exit point");
+        stepper[homeStepIndex].stop();
+        int center = exitPos - (abs(exitPos - enterPos)/2);
+        stepper[homeStepIndex].moveTo(center);
+        homingState = 2;
+        
+        
+        }
+ 
+      break;
+
+      case 2:
+      if( stepper[homeStepIndex].distanceToGo() == 0){
+          Serial.println("stepper home");
+          setShaftPos(homeStepIndex, 90);
+          homingState = 5;
+          }
+      break;
+
+      case 3:
+      
+      if(halls[homeStepIndex] > prevHalls[homeStepIndex]){
+        Serial.println(halls[homeStepIndex]);
+        Serial.println(prevHalls[homeStepIndex]);
+        exitPos = stepper[homeStepIndex].currentPosition();
+        Serial.println("found end pos");
+        homingState = 4;
+        stepper[homeStepIndex].stop();
+        pulse(homeStepIndex,-405); 
+        
+        }
+        //prevHalls[homeStepIndex] = halls[homeStepIndex];
+      break;
+
+      case 4:
+        if(halls[homeStepIndex] > prevHalls[homeStepIndex]){
+//          triggerNum += 1;
+//          if(triggerNum >= 2) {
+        enterPos = stepper[homeStepIndex].currentPosition();
+        stepper[homeStepIndex].stop();
+         Serial.println("found enter Pos");
+        int center = exitPos - (abs(exitPos - enterPos)/2);
+        stepper[homeStepIndex].moveTo(center);
+        homingState = 2;
+        triggerNum = 0;
+        }
+       // prevHalls[homeStepIndex] = halls[homeStepIndex];
+//        }
+        
+      break;
+
+      case 5:
+        if(homeStepIndex < 3){ 
+          Serial.println("next Motor");
+          homeStepIndex += 1;
+          homingState = 10;
+          pulse(homeStepIndex,405);
+        } else {
+              
+              setAllSpeed(7000, 10000); //sets motor speed and accel 
               
               Serial.println("all motors homed. proceed to checkout");
               homing = false;
               Serial.println("hit");
               
-            }
-        
-        
+          }
+      break;
+      default:
+
+      break;
+      
       }
+      
+      prevHalls[homeStepIndex] = halls[homeStepIndex];
+      
+//    if(halls[homeStepIndex] == 0){
+//        setShaftPos(homeStepIndex, 90 + offsets[homeStepIndex]);
+//        Serial.println("how many times is this playing");
+//        stepper[homeStepIndex].stop();
+//        
+//        if(homeStepIndex < 3){ 
+//      
+//          homeStepIndex += 1;
+//          pulse(homeStepIndex,360);
+//          
+//          } else {
+//
+//              setAllSpeed(7000, 5000); //sets motor speed and accel 
+//              
+//              Serial.println("all motors homed. proceed to checkout");
+//              homing = false;
+//              Serial.println("hit");
+//              
+//            }
+//        
+//        
+//      }
     
 //    for(int i = 0; i < 4; i++){
 //
@@ -282,7 +391,9 @@ void homeMotors() {
       
       isProcessing = false;
     }
-}
+
+    }
+    
 
 void loop() {
 
