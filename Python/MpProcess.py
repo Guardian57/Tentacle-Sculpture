@@ -98,7 +98,8 @@ class MpProcess:
 #         self.glitch_timer_time = time.perf_counter()
 #         self.glitch_timer_duration = 5
         
-        
+        self.speed_timer = Timer(5)
+        self.speed_toggle = True
     
     def start (self):
         Thread(target=self.process,args = ()).start()
@@ -117,7 +118,8 @@ class MpProcess:
         
         cmd_out = False
         val_when_enter = None
-        
+        self.glitch_timer.start()
+
         with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
             
             while not self.stopped:
@@ -173,7 +175,7 @@ class MpProcess:
                             
                         if self.turn_start:
                             print('reset turn time')
-                            
+                            self.speed_timer.start()
                             self.turn_timer.start()
                             self.turn_start = False
                         
@@ -339,6 +341,18 @@ class MpProcess:
                     self.idle_start = True
                     self.tracking_start = True
                 
+                if self.speed_timer.is_done():
+                    
+                    self.speed_toggle = not self.speed_toggle
+                    
+                    if(self.speed_toggle):
+                        print("toogle true")
+                        bus.write_i2c_block_data(addr,0x0A,[70, 100])
+                    else:
+                        print("toogle false")
+                        bus.write_i2c_block_data(addr,0x0A,[10, 20])
+                    
+                    self.speed_timer.start()
     
     def stop(self):
         self.stopped = True 
