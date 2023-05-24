@@ -159,8 +159,16 @@ class MpProcess:
                     landmarks = results.pose_landmarks.landmark
                         
                     soulder = [landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y]
-                    hand = [landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].x, landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].y]
-                    
+                    left_hand = [landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].x, landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].y]
+                    right_hand = [landmarks[mp_pose.PoseLandmark.RIGHT_INDEX.value].x, landmarks[mp_pose.PoseLandmark.RIGHT_INDEX.value].y]
+                    highest_point = left_hand
+                   
+                    #gets which hand is the highest and sets it as the tracked point
+                    if left_hand[1] > right_hand[1]: 
+                        highest_point = right_hand
+                    else:
+                        highest_point = left_hand
+
                     if self.glitch_timer.is_done():
                         
                         if self.tracking_start: #if it is the first time through the loop, reset timer, set animation interval and animation
@@ -190,9 +198,10 @@ class MpProcess:
                     if cmd_out == False:
                         
                         #position of the hand
-                        self.handPos = hand[0] * 640 #multiplied by screen dimentions
-                        self.handPosY = hand[1] * 640
+                        self.handPos = highest_point[0] * 640 #multiplied by screen dimentions
+                        self.handPosY = highest_point[1] * 640
                         
+
                         
                         
                         if time.perf_counter() >= self.track_timer_time:
