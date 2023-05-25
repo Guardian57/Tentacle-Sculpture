@@ -72,7 +72,7 @@ class MpProcess:
         #     pass
 
         #plays animation on startup before doing anything else. "wake up" animation
-        self.animation.run_animation("left")
+        self.animation.run_animation("lef")
         print("yo")
         #timer for playing animation
         self.anim_timer = Timer(30)

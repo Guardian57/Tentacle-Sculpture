@@ -18,7 +18,7 @@ def sig_handler(signum, frame):
 signal.signal(signal.SIGINT, sig_handler)
 signal.signal(signal.SIGTSTP, sig_handler)
 
-show_video = False
+show_video = True
 process_frames = True
 
 #cap = cv2.VideoCapture(0)
