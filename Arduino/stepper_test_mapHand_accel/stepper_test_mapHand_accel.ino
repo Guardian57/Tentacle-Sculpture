@@ -4,7 +4,7 @@
 
 #include <Wire.h>
 #include <AccelStepper.h>
-#include <MultiStepper.h>
+
 
 #define M_NUM 4 //number of motors being driven
 
@@ -53,7 +53,7 @@ boolean homing = false; // whether the ardunio is homing the sensors
 
 //Stepper handlers
 AccelStepper stepper[M_NUM]; 
-MultiStepper steppers;
+//MultiStepper steppers;
 
 //temporary holding array for info set over i2c
 byte dataArray[5]; //changed this to 5 to remove warnings
@@ -85,8 +85,6 @@ void setup() {
     stepper[i].setAcceleration(5000);
     //stepper[i].setSpeed(2000);
     
-    //add stepper to MultiStepper
-    steppers.addStepper(stepper[i]);
     
   }
 
