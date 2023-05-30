@@ -369,7 +369,7 @@ void loop() {
       if(digitalRead(MOTOR_TOGGLE)==HIGH and isPress == false){ //switch motors for manual control
           cntrM = (cntrM + 1) % M_NUM;
           Serial.println("controlling Motor " + String(cntrM));
-          delay(1); //prevent debouncing
+          delay(100); //prevent debouncing
           isPress = true;
         } else if(digitalRead(3)==LOW and isPress == true) {
             isPress = false;
