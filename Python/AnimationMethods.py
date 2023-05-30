@@ -16,7 +16,7 @@ class AnimationMethods:
         
         self.motor_count = 4 # number of motors
         self.maximum_angle = 180 # maximum angle motors can turn
-        self.targets = [90,90,90,90,70,70]
+        self.targets = []
         
         self.step = 0 # which step of the animation we are on
         self.uptime = time.perf_counter() # the time the program started running
@@ -75,10 +75,18 @@ class AnimationMethods:
             print("Starting Animation: " + animation)
             # print()
             print(self.data[animation]["frames"])
+
+            if self.data[animation]["type"] == "relative":
+                self.write_data(0xC, [1])
+                self.targets = [0,0,0,0,0,0,0,0,0,0]
+            else:
+                self.targets = [0,0,0,0,0,0,0]
+
             while self.step < len(self.data[animation]["frames"]): # while there are still commands that need to be executed
                 step_delay = self.data[animation]["frames"][self.step][4]
                 # if the current time is greater than the current time and the delay. default is zero to start command immediately
                 # print("step: " + str(self.step))
+                
                 if time.perf_counter() > self.delay:
                     
                     
@@ -106,16 +114,24 @@ class AnimationMethods:
                         if new_target > 180:
                             new_target -= 180
                         
-                    
-                        new_target = 180 - new_target #adjusts to flip motor orientation 
+                        if self.data[animation]["type"] != "relative":
+                            new_target = 180 - new_target #adjusts to flip motor orientation 
                         
                         self.targets[i] = new_target
 
                     self.targets[4] = self.data[animation]["frames"][self.step][5]
                     self.targets[5] = self.data[animation]["frames"][self.step][6]
+                    
 
                     print(self.targets)
-                    self.write_data(self.targets)
+                    if self.data[animation]["type"] == "relative":
+                        for i in range(4):
+                            self.targets[i+6] = self.data[animation]["isPositive"][self.step][i]
+                            print(self.targets)
+                        self.write_data(0xb, self.targets)
+                    else:
+                        self.write_data(0x08, self.targets)
+
                     self.stall() # makes sure tentacle isn't moving before executing command
                     self.delay = step_delay + time.perf_counter()
                     self.step+=1 # moves on to next step
@@ -127,9 +143,9 @@ class AnimationMethods:
    
 
 
-    def write_data(self, value): # writes the command to the arduino
+    def write_data(self,addr, value): # writes the command to the arduino
         #byte_value = self.string_to_bytes(value) # used in old version
-        self.bus.write_i2c_block_data(self.address,0x08,value) #first byte is 0=command byte.. just is.
+        self.bus.write_i2c_block_data(self.address,addr,value) #first byte is 0=command byte.. just is.
         print("to Arduino: " + str(value))
         return -1
 

@@ -56,7 +56,7 @@ AccelStepper stepper[M_NUM];
 //MultiStepper steppers;
 
 //temporary holding array for info set over i2c
-byte dataArray[5]; //changed this to 5 to remove warnings
+byte dataArray[11]; //changed this to 5 to remove warnings
 
 int cntrM = 0; //motor that is being manually controlled
 boolean isPress = false;
@@ -65,6 +65,8 @@ byte homingState = 0; //the current homing state of the motor. 0 - searching for
 int enterPos = NULL;
 int exitPos = NULL;
 byte triggerNum = 0; // number of times the hall effect has entered or exited the sensor
+long refPos[4];
+
 
 void setup() {
   Serial.begin(9600);
@@ -123,6 +125,8 @@ void receiveEvent(int howMany) { // triggers when pi sends a command
         for(int i = 0; i < howMany;i++){
             dataArray[i] = Wire.read(); // reads the information sent by pi
             //Serial.println(dataArray[i]);
+            
+            
           }
           
           if(dataArray[0] == 0){ // sets motor locations to zero if data array starts with zero
@@ -172,16 +176,49 @@ void receiveEvent(int howMany) { // triggers when pi sends a command
             }
 
           if(dataArray[0] == 8){ // in charge of moving the motors for animation
-
+              
               setAllSpeed(dataArray[5] * 100,dataArray[6] * 100); // sets the speed and accel for each new position
               
+                
               for(int i = 1; i <= M_NUM; i++){
                   //degs[i-1] = dataArray[i]; // reads the angles sent through pi
                   //Serial.println( i + ": " + String(dataArray[i]));
                   pulse(i-1, dataArray[i]); // command to set motor targets
                 }
               
+
+              
+              
             }  
+
+            if(dataArray[0] == 11){ // in charge of moving the motors for animation
+              
+              setAllSpeed(dataArray[5] * 100,dataArray[6] * 100); // sets the speed and accel for each new position
+              
+              
+              
+              for(int i = 1; i <= M_NUM; i++){
+                  int temp = 1;
+                  
+                  
+                  if(dataArray[i+6] == 0){
+                      temp = -1;
+                    }else {
+                      temp = 1;
+                      }
+                  pulseRel(i-1, dataArray[i], temp); // command to set motor targets
+                }
+                
+
+              
+              
+            }
+
+            if(dataArray[0] == 12){ //set referance position for relative animation
+                for(int i = 1; i <= M_NUM; i++){
+                    refPos[i-1] = stepper[i-1].currentPosition();
+                  }
+              }  
 
             if(dataArray[0] == 10){ // in charge of changing speed of motors
               Serial.println("changed Speed");
@@ -208,6 +245,28 @@ void pulse(int stpr, int deg){
       moveStep(stpr); // moves a step
         
     }
+
+void pulseRel(int stpr, int deg, int multi){
+    //converts degrees into pulses factoring in micro steps
+      float pulseDeg = 360.0f/ppr;
+      
+           
+           
+           positions[stpr] = deg/pulseDeg; // calculates the new position based on degrees
+           //Serial.println(String(i) + ": " + positions[i]);
+           int relativePos = refPos[stpr] + (positions[stpr] * multi);
+           
+           if(relativePos > 180*ppr){
+              relativePos = 180*ppr;
+            }
+            
+            if(relativePos < 0){
+              relativePos = 0;
+            }
+              
+           positions[stpr] = relativePos;
+           moveStep(stpr); // moves a step
+  }
 
 void sendState(){ 
   //sends a 1 or 0 depending on if the arduino is busy to prevent pi from overloading arduino

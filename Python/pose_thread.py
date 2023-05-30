@@ -34,7 +34,7 @@ video_getter = VideoGet(1).start()
 
 if process_frames:
     
-    video_process = MpProcess( start_rot, video_getter.frame).start()
+    video_process = MpProcess(start_rot, video_getter.frame).start()
     
 if show_video:
     

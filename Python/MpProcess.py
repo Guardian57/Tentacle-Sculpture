@@ -72,7 +72,7 @@ class MpProcess:
         #     pass
 
         #plays animation on startup before doing anything else. "wake up" animation
-        self.animation.run_animation("lef")
+        self.animation.run_animation("rel")
         print("yo")
         #timer for playing animation
         self.anim_timer = Timer(30)
@@ -322,10 +322,10 @@ class MpProcess:
                     print('playing animation')
                     if self.tracking_start == False:
                         if self.handPos >= 320:
-                            self.animation.run_animation("left")
+                            self.animation.run_animation("rel")
                         else:
                             #play animation
-                            self.animation.run_animation("right")
+                            self.animation.run_animation("rel")
                     else:
                         self.animation.run_animation(self.anim_name_string)
                     
