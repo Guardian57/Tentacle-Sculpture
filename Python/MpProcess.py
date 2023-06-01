@@ -5,6 +5,8 @@ from smbus import SMBus
 import time
 from AnimationMethods import AnimationMethods
 from timer import Timer
+import random
+
 
 addr = 0x8 # bus address
 bus = SMBus(7) # indicates /dev/ic2-1
@@ -75,10 +77,10 @@ class MpProcess:
         self.animation.run_animation("rel")
         print("yo")
         #timer for playing animation
-        self.anim_timer = Timer(30)
+        self.anim_timer = Timer(50)
 #         self.anim_timer_time = time.perf_counter()
 #         self.anim_timer_duration = 20
-        self.anim_name_string = "jake_test"
+        
         self.tracking_start = True #tells if its the first time through tracking loop
         self.idle_start = True #tells if its the first time through idle loop
         
@@ -87,14 +89,14 @@ class MpProcess:
         self.track_timer_duration = 2
         
         #timer so one person doesn't hog it
-        self.turn_timer = Timer(65)
+        self.turn_timer = Timer(75)
 #         self.turn_timer_time = time.perf_counter()
 #         self.turn_timer_duration = 65
         self.turn_start = True
         self.endOfSession = False
         
         #timer to prevent glitches while in idle mode
-        self.glitch_timer = Timer(5)
+        self.glitch_timer = Timer(2)
 #         self.glitch_timer_time = time.perf_counter()
 #         self.glitch_timer_duration = 5
         
@@ -175,15 +177,15 @@ class MpProcess:
                             
                             self.anim_timer.start()
                             print('tracking reset')
-                            
-                            
+                            self.anim_timer.update_interval(50)
+                            bus.write_i2c_block_data(addr,0x0A,[70, 50])
                             
                             self.tracking_start = False
                             self.idle_start = True
                             
                         if self.turn_start:
                             print('reset turn time')
-                            self.speed_timer.start()
+                            # self.speed_timer.start()
                             self.turn_timer.start()
                             self.turn_start = False
                         
@@ -300,6 +302,7 @@ class MpProcess:
                     
                     if self.idle_start: #if it is the first time through the loop, reset timer, set animation interval and animation
                         print('idle reset')
+                        self.anim_timer.update_interval(30)
                         self.anim_timer.start()
                         self.glitch_timer.start()
                         #makes sure this code only runs once and resets tracking loops code to run once on start 
@@ -307,7 +310,7 @@ class MpProcess:
                         self.tracking_start = True
                         self.turn_start = True
                     
-                    
+                        time.sleep(1)
                         #resets the position to resting position 0 
                         bus.write_i2c_block_data(addr,0x07,[0,0,0,0])
                         
@@ -322,12 +325,12 @@ class MpProcess:
                     print('playing animation')
                     if self.tracking_start == False:
                         if self.handPos >= 320:
-                            self.animation.run_animation("rel")
+                            self.animation.run_animation(self.animation.data["anim_array_left"]["names"][random.randrange(0,len(self.animation.data["anim_array_left"]["names"]))])
                         else:
                             #play animation
-                            self.animation.run_animation("rel")
+                            self.animation.run_animation(self.animation.data["anim_array_right"]["names"][random.randrange(0,len(self.animation.data["anim_array_right"]["names"]))])
                     else:
-                        self.animation.run_animation(self.anim_name_string)
+                        self.animation.run_animation(self.animation.run_animation(self.animation.data["anim_array_idle"]["names"][random.randrange(0,len(self.animation.data["anim_array_idle"]["names"]))]))
                     
                     #reset timer
                     self.anim_timer.start()
@@ -361,7 +364,7 @@ class MpProcess:
                         print("toogle false")
                         bus.write_i2c_block_data(addr,0x0A,[10, 20])
                     
-                    self.speed_timer.start()
+                    # self.speed_timer.start()
     
     def stop(self):
         self.stopped = True 

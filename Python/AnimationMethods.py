@@ -115,10 +115,10 @@ class AnimationMethods:
                             new_target -= 180
                         
                         if self.data[animation]["type"] != "relative":
-                            new_target = 180 - new_target #adjusts to flip motor orientation 
-                        
+                            # new_target = 180 - new_target #adjusts to flip motor orientation 
+                            pass
                         self.targets[i] = new_target
-
+                    print(self.targets)
                     self.targets[4] = self.data[animation]["frames"][self.step][5]
                     self.targets[5] = self.data[animation]["frames"][self.step][6]
                     
@@ -133,7 +133,8 @@ class AnimationMethods:
                         self.write_data(0x08, self.targets)
 
                     self.stall() # makes sure tentacle isn't moving before executing command
-                    self.delay = step_delay + time.perf_counter()
+                    time.sleep(self.data[animation]["frames"][self.step][4])
+                    # self.delay = self.data[animation]["frames"][self.step][4] + time.perf_counter()
                     self.step+=1 # moves on to next step
                 
         self.bus.write_i2c_block_data(self.address,0x0A,[70, 70])        
