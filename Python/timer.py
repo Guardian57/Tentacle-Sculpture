@@ -27,3 +27,6 @@ class Timer:
     def cancel(self):
         self.start_time = None
         self.pause_time = None
+
+    def update_interval(self, new_interval):
+        self.interval = new_interval
