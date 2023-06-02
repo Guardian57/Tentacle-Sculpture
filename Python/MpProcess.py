@@ -163,6 +163,7 @@ class MpProcess:
                     soulder = [landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x,landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y]
                     left_hand = [landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].x, landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].y]
                     right_hand = [landmarks[mp_pose.PoseLandmark.RIGHT_INDEX.value].x, landmarks[mp_pose.PoseLandmark.RIGHT_INDEX.value].y]
+                    hip = [landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value].x, landmarks[mp_pose.PoseLandmark.RIGHT_HIP.value].y]
                     highest_point = left_hand
                    
                     #gets which hand is the highest and sets it as the tracked point
@@ -211,76 +212,80 @@ class MpProcess:
                             self.delayedPos = self.handPos
                             
                             self.track_timer_time = time.perf_counter() + self.track_timer_duration
+
+                        if (hip[1]*480) < 480:    
+                            #influence over the range of the horizontal influence.
+                            #adjusting the influence range with the Y axis moves the motor positions to the respective position within the new range resulting in verticle movement. 
+                            #simple way of adding verticle movement
+                            verticle_influence = map_range(self.handPosY, minlimY, maxlimY, 0.9, 0.3)    
                             
-                        #influence over the range of the horizontal influence.
-                        #adjusting the influence range with the Y axis moves the motor positions to the respective position within the new range resulting in verticle movement. 
-                        #simple way of adding verticle movement
-                        verticle_influence = map_range(self.handPosY, minlimY, maxlimY, 0.9, 0.3)    
-                        
-                        #motor position of top section from a delayed handPos
-                        motor_top_one_map = map_range(self.delayedPos, minlim, maxlim, 0, 180)
-                        motor_top_two_map = map_range(self.delayedPos, minlim, maxlim, 180, 0) #flipped so motors rotate in twards the center
-                        
-                        #clamps the top section motors so they don't over rotate past 180
-                        motor_top_one_clamped = clamp_number(motor_top_one_map, 0, 180)
-                        motor_top_two_clamped = clamp_number(motor_top_two_map, 180, 0)
-                        
-#                       #final top section motor positons with clamp
-                        motor_top_one = int(motor_top_one_clamped)
-                        motor_top_two = int(motor_top_two_clamped)
-                        
-                        
-                        #adjusts the ratio between the top sections motor positions and the bottom sections motor range. 
-                        #180 Deg top section motor = half range of motion for bottom section motor. 0 Deg top = full range bottom
-                        motor_influence_one = map_range(motor_top_one, 180 , 0, 0.5, 1)
-                        motor_influence_two = map_range(motor_top_two, 180 , 0, 0.5, 1)
-                                            
-                        #the upper limits of the bottom sections motor range adjusted by the motor influence. this is serving as direct motor position of now
-                        motor_bot_one_limit = (180 * motor_influence_one)  
-                        motor_bot_two_limit = (180 * motor_influence_two)
-                        
-                        divid_one_low = map_range(motor_top_one, 180, 0, 2, 1.5)
-                        divid_one_high = map_range(motor_top_one, 180, 0, 4, 10)
-                        
-                        clamped_v1 = clamp_number(divid_one_low, 2, 1)
-                        clamped_v2 = clamp_number(divid_one_high, 4, 1)
-                        
-                        divid_two_low = map_range(motor_top_two, 180, 0, 2, 1.5)
-                        divid_two_high = map_range(motor_top_two, 180, 0, 4, 10)
-                        
-                        clamped_v1_1 = clamp_number(divid_two_low, 2, 1)
-                        clamped_v2_1 = clamp_number(divid_two_high, 4, 1)
-                        
-#                       #secondary limit which expands the range of bottom section motors based on the positon of the hand on the Y axis. limit is determined by adding a persentage of the range to the current motor postion
-                        m_b_1_l2 = motor_bot_one_limit + map_range(self.handPosY, minlimY, maxlimY, motor_bot_one_limit/divid_one_low , -motor_bot_one_limit/divid_one_high)                                                             
-                        m_b_2_l2 = motor_bot_two_limit + map_range(self.handPosY, minlimY, maxlimY, motor_bot_two_limit/divid_two_low, -motor_bot_two_limit/divid_two_high)    
-                        
-                        #mapping the hand position to the motor range with secondary limits applied 
-                        motor_bot_one_map = map_range(self.handPos, minlim, maxlim, 0, m_b_1_l2) 
-                        motor_bot_two_map = map_range(self.handPos, minlim, maxlim, m_b_2_l2, 0) 
-                        
-                        #making sure motor position does not go past limits
-                        motor_bot_one_clamped = clamp_number(motor_bot_one_map, 0, m_b_1_l2)
-                        motor_bot_two_clamped = clamp_number(motor_bot_two_map, m_b_2_l2, 0)
-                        
-                        #final bottom section motor positions with clamp
-                        motor_bot_one = int(motor_bot_one_clamped)
-                        motor_bot_two = int(motor_bot_two_clamped)
-                        
- 
-                        
- 
- 
- 
- 
-                        if cmd_out == False:
-#                             cmd_out = True
-#                             print("cmd started ", format(cmd_out))
-                            val_when_enter = motor_bot_one
-#                             print('Motor_bottom_one: ', motor_bot_one)
-#                             print('Motor_bottom_two: ', motor_bot_two)
-                            bus.write_i2c_block_data(addr,0x07,[motor_top_one, motor_top_two, motor_bot_one, motor_bot_two])
+                            #motor position of top section from a delayed handPos
+                            motor_top_one_map = map_range(self.delayedPos, minlim, maxlim, 0, 180)
+                            motor_top_two_map = map_range(self.delayedPos, minlim, maxlim, 180, 0) #flipped so motors rotate in twards the center
                             
+                            #clamps the top section motors so they don't over rotate past 180
+                            motor_top_one_clamped = clamp_number(motor_top_one_map, 0, 180)
+                            motor_top_two_clamped = clamp_number(motor_top_two_map, 180, 0)
+                            
+    #                       #final top section motor positons with clamp
+                            motor_top_one = int(motor_top_one_clamped)
+                            motor_top_two = int(motor_top_two_clamped)
+                            
+                            
+                            #adjusts the ratio between the top sections motor positions and the bottom sections motor range. 
+                            #180 Deg top section motor = half range of motion for bottom section motor. 0 Deg top = full range bottom
+                            motor_influence_one = map_range(motor_top_one, 180 , 0, 0.5, 1)
+                            motor_influence_two = map_range(motor_top_two, 180 , 0, 0.5, 1)
+                                                
+                            #the upper limits of the bottom sections motor range adjusted by the motor influence. this is serving as direct motor position of now
+                            motor_bot_one_limit = (180 * motor_influence_one)  
+                            motor_bot_two_limit = (180 * motor_influence_two)
+                            
+                            divid_one_low = map_range(motor_top_one, 180, 0, 2, 1.5)
+                            divid_one_high = map_range(motor_top_one, 180, 0, 4, 10)
+                            
+                            clamped_v1 = clamp_number(divid_one_low, 2, 1)
+                            clamped_v2 = clamp_number(divid_one_high, 4, 1)
+                            
+                            divid_two_low = map_range(motor_top_two, 180, 0, 2, 1.5)
+                            divid_two_high = map_range(motor_top_two, 180, 0, 4, 10)
+                            
+                            clamped_v1_1 = clamp_number(divid_two_low, 2, 1)
+                            clamped_v2_1 = clamp_number(divid_two_high, 4, 1)
+                            
+    #                       #secondary limit which expands the range of bottom section motors based on the positon of the hand on the Y axis. limit is determined by adding a persentage of the range to the current motor postion
+                            m_b_1_l2 = motor_bot_one_limit + map_range(self.handPosY, minlimY, maxlimY, motor_bot_one_limit/divid_one_low , -motor_bot_one_limit/divid_one_high)                                                             
+                            m_b_2_l2 = motor_bot_two_limit + map_range(self.handPosY, minlimY, maxlimY, motor_bot_two_limit/divid_two_low, -motor_bot_two_limit/divid_two_high)    
+                            
+                            #mapping the hand position to the motor range with secondary limits applied 
+                            motor_bot_one_map = map_range(self.handPos, minlim, maxlim, 0, m_b_1_l2) 
+                            motor_bot_two_map = map_range(self.handPos, minlim, maxlim, m_b_2_l2, 0) 
+                            
+                            #making sure motor position does not go past limits
+                            motor_bot_one_clamped = clamp_number(motor_bot_one_map, 0, m_b_1_l2)
+                            motor_bot_two_clamped = clamp_number(motor_bot_two_map, m_b_2_l2, 0)
+                            
+                            #final bottom section motor positions with clamp
+                            motor_bot_one = int(motor_bot_one_clamped)
+                            motor_bot_two = int(motor_bot_two_clamped)
+                       
+                        
+ 
+                        
+ 
+ 
+ 
+ 
+                            if cmd_out == False:
+    #                             cmd_out = True
+    #                             print("cmd started ", format(cmd_out))
+                                val_when_enter = motor_bot_one
+    #                             print('Motor_bottom_one: ', motor_bot_one)
+    #                             print('Motor_bottom_two: ', motor_bot_two)
+                                bus.write_i2c_block_data(addr,0x07,[motor_top_one, motor_top_two, motor_bot_one, motor_bot_two])
+                        else:
+                            bus.write_i2c_block_data(addr,0x07,[0,0,0,0])    
+                    
                     elif cmd_out == True:
                         status = bus.read_byte(addr)
 #                         print(status)
