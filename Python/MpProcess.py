@@ -186,7 +186,7 @@ class MpProcess:
                             
                         if self.turn_start:
                             print('reset turn time')
-                            # self.speed_timer.start()
+                            self.speed_timer.start()
                             self.turn_timer.start()
                             self.turn_start = False
                         
@@ -369,7 +369,7 @@ class MpProcess:
                         print("toogle false")
                         bus.write_i2c_block_data(addr,0x0A,[10, 20])
                     
-                    # self.speed_timer.start()
+                    self.speed_timer.start()
     
     def stop(self):
         self.stopped = True 
