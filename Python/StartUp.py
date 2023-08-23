@@ -1,5 +1,7 @@
 #!/home/rock/miniconda3/bin/python
 
+#crontab: @reboot /home/rock/miniconda3/bin/python /home/rock/Desktop/Tentacle-Sculpture/Python/StartUp.py &
+
 from periphery import GPIO
 import time
 import subprocess
