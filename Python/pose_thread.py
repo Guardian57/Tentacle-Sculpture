@@ -5,24 +5,37 @@ from VideoGet import VideoGet
 from VideoShow import VideoShow
 from MpProcess import MpProcess
 import time
+import signal
 
 
-show_video = True
+#turns off the camera properly when an interupt happens
+def sig_handler(signum, frame):
+    video_getter.stop()
+    cv2.destroyAllWindows()
+    exit(1)
+
+#registers signal handlers to catch interupts
+signal.signal(signal.SIGINT, sig_handler)
+signal.signal(signal.SIGTSTP, sig_handler)
+
+show_video = False
 process_frames = True
 
 #cap = cv2.VideoCapture(0)
-value = input("Please enter starting rotation: ")
 
-start_rot = int(value)
+start_rot = None #default start rotation
+send_reset = False
 
-value = input("Type 'yes' to start tracking: ")
-if value == 'yes':
-    print("calibration complete. starting program...")
 
-video_getter = VideoGet(0).start()
+
+video_getter = VideoGet(1).start()
+
 if process_frames:
+    
     video_process = MpProcess(start_rot, video_getter.frame).start()
+    
 if show_video:
+    
     video_shower = VideoShow(video_getter.frame).start()
 
 
@@ -42,8 +55,6 @@ def putIterationsPerSec(frame, iterations_per_sec):
     print("{:.0f} iterations/sec".format(iterations_per_sec))
     
     return frame
-
-
 
 while True:
     
