@@ -1,27 +1,4 @@
 {
-    "anim_array_left": {
-        "names": [
-            "left",
-            "rel"
-        ]
-
-    },
-    
-    "anim_array_right": {
-        "names": [
-            "right",
-            "rel"
-        ]
-    },
-
-    "anim_array_idle" : {
-        "names": [
-            "idle_twitch",
-            "idle_twitch_2",
-            "idle_twitch_3"
-            
-        ]  
-    },
     
     "idle_twitch" : { 
         "type" : "relative",

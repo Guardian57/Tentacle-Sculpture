@@ -52,7 +52,23 @@ class MpProcess:
         self.time_between_anim_sleep = config.get('Timers', 'anim_sleep') #time between animations when sleeping
         self.upper_segment_delay = config.get('Timers', 'seg_delay')#Delay time of Upper segment movment
         self.turn_duration = config.get('Timers', 'turn_time')#turn timer
-        self.sleep_time = config.get('Timers', 'sleep_time') # the amount of time it sleeps before it can track again
+        self.sleep_time = int(config.get('Timers', 'sleep_time')) # the amount of time it sleeps before it can track again
+        
+        
+        anim_array_left_string = config.get('Anim', 'anim_left')
+        self.anim_array_left =  anim_array_left_string.split(', ')
+        print(self.anim_array_left)
+
+        anim_array_right_string = config.get('Anim', 'anim_right')
+        self.anim_array_right =  anim_array_right_string.split(', ')
+        print(self.anim_array_right)
+
+        anim_array_idle_string = config.get('Anim', 'anim_idle')
+        self.anim_array_idle =  anim_array_idle_string.split(', ')
+        print(self.anim_array_idle)
+
+        self.move_speed = int(config.get('Speed', 'speed')) # speed of tracking movement
+        self.move_accel = int(config.get('Speed', 'accel')) # acceleration of tracking movement
         # todo~ #speed changing timer while tracking 
         
 
@@ -78,7 +94,9 @@ class MpProcess:
         self.upper_segment_delay = 2
         self.turn_duration = 10
         self.sleep_time = 15
-
+        self.move_speed = 70
+        self.move_accel = 50
+        
         self.get_config()
         
         '''
@@ -97,7 +115,7 @@ class MpProcess:
 
         # while(bus.read_byte(addr)):
         #     pass
-
+        
         #plays animation on startup before doing anything else. "wake up" animation
         self.animation.run_animation("rel")
         print("yo")
@@ -205,7 +223,7 @@ class MpProcess:
                             self.anim_timer.start()
                             print('tracking reset')
                             self.anim_timer.update_interval(self.time_between_anim_awake)
-                            bus.write_i2c_block_data(addr,0x0A,[70, 50])
+                            bus.write_i2c_block_data(addr,0x0A,[self.move_speed, self.move_accel])
                             
                             self.tracking_start = False
                             self.idle_start = True
@@ -356,12 +374,12 @@ class MpProcess:
                     print('playing animation')
                     if self.tracking_start == False:
                         if self.handPos >= 320:
-                            self.animation.run_animation(self.animation.data["anim_array_left"]["names"][random.randrange(0,len(self.animation.data["anim_array_left"]["names"]))])
+                            self.animation.run_animation(self.anim_array_left[random.randrange(0,len(self.anim_array_left))])
                         else:
                             #play animation
-                            self.animation.run_animation(self.animation.data["anim_array_right"]["names"][random.randrange(0,len(self.animation.data["anim_array_right"]["names"]))])
+                            self.animation.run_animation(self.anim_array_right[random.randrange(0,len(self.anim_array_right))])
                     else:
-                        self.animation.run_animation(self.animation.run_animation(self.animation.data["anim_array_idle"]["names"][random.randrange(0,len(self.animation.data["anim_array_idle"]["names"]))]))
+                        self.animation.run_animation(self.anim_array_idle[random.randrange(0,len(self.anim_array_idle))])
                     
                     #reset timer
                     self.anim_timer.start()
