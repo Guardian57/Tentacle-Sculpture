@@ -6,6 +6,7 @@ import time
 from AnimationMethods import AnimationMethods
 from timer import Timer
 import random
+import configparser
 
 
 addr = 0x8 # bus address
@@ -28,7 +29,10 @@ def map_range(val, inMin, inMax, outMin, outMax):
     return outMin + (normalizedVal * outSpan)
 
 def clamp_number(num, a, b):
-  return max(min(num, max(a, b)), min(a, b))
+    return max(min(num, max(a, b)), min(a, b))
+
+
+    
 
 
 class MpProcess:
@@ -37,16 +41,25 @@ class MpProcess:
 
     """  
 
+    def get_config(self): # gets the data from the config file and stores it in variables
+        
+        #creates the parser and opens the file
+        config = configparser.ConfigParser()
+        config.read("/home/rock/Desktop/Tentacle-Sculpture/Python/tentacle_config.ini")
+        
+        #sets all variables in the config
+        self.time_between_anim_awake = config.get('Timers', 'anim_awake') #time between animations when awake
+        self.time_between_anim_sleep = config.get('Timers', 'anim_sleep') #time between animations when sleeping
+        self.upper_segment_delay = config.get('Timers', 'seg_delay')#Delay time of Upper segment movment
+        self.turn_duration = config.get('Timers', 'turn_time')#turn timer
+        self.sleep_time = config.get('Timers', 'sleep_time') # the amount of time it sleeps before it can track again
+        # todo~ #speed changing timer while tracking 
+        
 
-      
     def __init__(self, curPos, frame=None):
         
         self.currentPos = curPos
          
-        
-
-        
-        
         
         self.frame = frame
         self.image = frame
@@ -56,12 +69,24 @@ class MpProcess:
         #animation Merge variables 
         self.motionAnimToggle = 0 # toggle for switching in between animation and motion tracking mode for each run
         self.animation = AnimationMethods(addr, bus)
+
+        #variables for configuration
+
+        #Timer Numbers (defaut) - changes if config file is present
+        self.time_between_anim_awake = 50
+        self.time_between_anim_sleep = 30
+        self.upper_segment_delay = 2
+        self.turn_duration = 10
+        self.sleep_time = 15
+
+        self.get_config()
         
         '''
         self.animation.run_animation("nine-d")
         while(True):
             pass
         '''
+
         time.sleep(1)
         bus.write_i2c_block_data(addr,0x09,[1])
         
@@ -77,7 +102,7 @@ class MpProcess:
         self.animation.run_animation("rel")
         print("yo")
         #timer for playing animation
-        self.anim_timer = Timer(50)
+        self.anim_timer = Timer(self.time_between_anim_awake)
 #         self.anim_timer_time = time.perf_counter()
 #         self.anim_timer_duration = 20
         
@@ -85,11 +110,11 @@ class MpProcess:
         self.idle_start = True #tells if its the first time through idle loop
         
         #timer for tracking
-        self.track_timer_time = time.perf_counter()
-        self.track_timer_duration = 2
+        self.track_timer = Timer(self.upper_segment_delay)
+        
         
         #timer so one person doesn't hog it
-        self.turn_timer = Timer(75)
+        self.turn_timer = Timer(self.turn_duration)
 #         self.turn_timer_time = time.perf_counter()
 #         self.turn_timer_duration = 65
         self.turn_start = True
@@ -121,6 +146,7 @@ class MpProcess:
         cmd_out = False
         val_when_enter = None
         self.glitch_timer.start()
+        self.track_timer.start()
 
         with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
             
@@ -178,7 +204,7 @@ class MpProcess:
                             
                             self.anim_timer.start()
                             print('tracking reset')
-                            self.anim_timer.update_interval(50)
+                            self.anim_timer.update_interval(self.time_between_anim_awake)
                             bus.write_i2c_block_data(addr,0x0A,[70, 50])
                             
                             self.tracking_start = False
@@ -207,11 +233,11 @@ class MpProcess:
 
                         
                         
-                        if time.perf_counter() >= self.track_timer_time:
+                        if self.track_timer.is_done():
                             
                             self.delayedPos = self.handPos
                             
-                            self.track_timer_time = time.perf_counter() + self.track_timer_duration
+                            self.track_timer.start()
 
                         if (hip[1]*480) < 480:    
                             #influence over the range of the horizontal influence.
@@ -307,7 +333,7 @@ class MpProcess:
                     
                     if self.idle_start: #if it is the first time through the loop, reset timer, set animation interval and animation
                         print('idle reset')
-                        self.anim_timer.update_interval(30)
+                        self.anim_timer.update_interval(self.time_between_anim_sleep)
                         self.anim_timer.start()
                         self.glitch_timer.start()
                         #makes sure this code only runs once and resets tracking loops code to run once on start 
@@ -350,7 +376,7 @@ class MpProcess:
                     
                     bus.write_i2c_block_data(addr,0x07,[0,0,0,0])
                     
-                    time.sleep(15)
+                    time.sleep(self.sleep_time)
                     self.turn_start = True
                     self.endOfSession = False
                     
