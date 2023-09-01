@@ -78,7 +78,9 @@ class MpProcess:
             #Move
             self.is_opposite = bool(config.get('Move', 'opposite'))
 
-            if bool(config.get('Move', 'opposite')) is True:
+            if config.getboolean('Move', 'opposite') is True:
+                print("is true")
+                
                 self.lower_limit = 0
                 self.upper_limit = 180
             else:
