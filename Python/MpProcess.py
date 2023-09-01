@@ -53,13 +53,16 @@ class MpProcess:
             config = configparser.ConfigParser()
             config.read("/home/rock/Desktop/Tentacle-Sculpture/Python/tentacle_config.ini")
             
-            #sets all variables in the config
+            
+
+            #Timers
             self.time_between_anim_awake = config.get('Timers', 'anim_awake') #time between animations when awake
             self.time_between_anim_sleep = config.get('Timers', 'anim_sleep') #time between animations when sleeping
             self.upper_segment_delay = config.get('Timers', 'seg_delay')#Delay time of Upper segment movment
             self.turn_duration = config.get('Timers', 'turn_time')#turn timer
             self.sleep_time = int(config.get('Timers', 'sleep_time')) # the amount of time it sleeps before it can track again
             
+            #Anim
             anim_array_left_string = config.get('Anim', 'anim_left')
             self.anim_array_left =  anim_array_left_string.split(', ')
             
@@ -69,15 +72,13 @@ class MpProcess:
             anim_array_idle_string = config.get('Anim', 'anim_idle')
             self.anim_array_idle =  anim_array_idle_string.split(', ')
             
-
+            #Speed
             self.move_speed = int(config.get('Speed', 'speed')) # speed of tracking movement
             self.move_accel = int(config.get('Speed', 'accel')) # acceleration of tracking movement
             # todo~ #speed changing timer while tracking 
 
 
             #Move
-            self.is_opposite = bool(config.get('Move', 'opposite'))
-
             if config.getboolean('Move', 'opposite') is True:
                 print("is true")
                 
@@ -86,6 +87,21 @@ class MpProcess:
             else:
                 self.lower_limit = 180
                 self.upper_limit = 0
+
+            #Track
+            self.max_lim_x = (640 + config.getint('Track', 'x_upper_lim')) + config.getint('Track', 'x_offset')
+            self.min_lim_x = (0 + config.getint('Track', 'x_lower_lim')) + config.getint('Track', 'x_offset')
+
+            self.max_lim_y = (480 + config.getint('Track', 'y_upper_lim')) + config.getint('Track', 'y_offset')
+            self.min_lim_y = (0 + config.getint('Track', 'y_lower_lim')) + + config.getint('Track', 'y_offset')
+
+
+            #Homing
+            self.is_homing = config.getboolean('Homing', '90deg')
+
+            #Debug
+            self.show_video = config.getboolean('Debug', 'show_video')
+
             
 
         else:
@@ -118,14 +134,12 @@ class MpProcess:
         self.get_config()
 
        
+        if self.is_homing: # set this value in the config file
+            #sets the motors to 90 deg and holds. **the rest of the program will not run!** for adjusting hall effect sensors
+            self.animation.run_animation("nine-d")
+            while(True):
+                pass
         
-        
-        
-        '''
-        self.animation.run_animation("nine-d")
-        while(True):
-            pass
-        '''
 
         time.sleep(1)
         bus.write_i2c_block_data(addr,0x09,[1])
@@ -177,11 +191,6 @@ class MpProcess:
         motor_top_one = 180 #motors labeled one are on the same side. top and bottom controls. operators right viewers left
         motor_top_two = 180
         
-        maxlim = 640 - 20
-        minlim = 0 + 20
-        
-        maxlimY = 480 - 20
-        minlimY = 0 + 20
         
         cmd_out = False
         val_when_enter = None
@@ -216,8 +225,8 @@ class MpProcess:
             #pose 
                 mp_drawing.draw_landmarks(image,results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
                 
-                cv2.line(image, (minlim, 15), (maxlim, 15), (255,0,0), 5) #draws horizontal line
-                cv2.line(image, (15, minlimY), (15, maxlimY), (0,255,0), 5) #draws verticle line
+                cv2.line(image, (self.min_lim_x, 15), (self.max_lim_x, 15), (255,0,0), 5) #draws horizontal line
+                cv2.line(image, (15, self.min_lim_y), (15, self.max_lim_y), (0,255,0), 5) #draws verticle line
                 
                 self.image = image
                 
@@ -283,15 +292,15 @@ class MpProcess:
                             #influence over the range of the horizontal influence.
                             #adjusting the influence range with the Y axis moves the motor positions to the respective position within the new range resulting in verticle movement. 
                             #simple way of adding verticle movement
-                            verticle_influence = map_range(self.handPosY, minlimY, maxlimY, 0.9, 0.3)    
+                            verticle_influence = map_range(self.handPosY, self.min_lim_y, self.max_lim_y, 0.9, 0.3)    
                             
                             #motor position of top section from a delayed handPos
-                            motor_top_one_map = map_range(self.delayedPos, minlim, maxlim, self.upper_limit, self.lower_limit)
-                            motor_top_two_map = map_range(self.delayedPos, minlim, maxlim, self.lower_limit, self.upper_limit) #flipped so motors rotate in twards the center
+                            motor_top_one_map = map_range(self.delayedPos, self.min_lim_x, self.max_lim_x, self.upper_limit, self.lower_limit)
+                            motor_top_two_map = map_range(self.delayedPos, self.min_lim_x, self.max_lim_x, self.lower_limit, self.upper_limit) #flipped so motors rotate in twards the center
                             
                             #clamps the top section motors so they don't over rotate past 180
-                            motor_top_one_clamped = clamp_number(motor_top_one_map, 0, 180)
-                            motor_top_two_clamped = clamp_number(motor_top_two_map, 180, 0)
+                            motor_top_one_clamped = clamp_number(motor_top_one_map, self.upper_limit, self.lower_limit)
+                            motor_top_two_clamped = clamp_number(motor_top_two_map, self.upper_limit, self.lower_limit)
                             
     #                       #final top section motor positons with clamp
                             motor_top_one = int(motor_top_one_clamped)
@@ -320,12 +329,12 @@ class MpProcess:
                             clamped_v2_1 = clamp_number(divid_two_high, 4, 1)
                             
     #                       #secondary limit which expands the range of bottom section motors based on the positon of the hand on the Y axis. limit is determined by adding a persentage of the range to the current motor postion
-                            m_b_1_l2 = motor_bot_one_limit + map_range(self.handPosY, minlimY, maxlimY, motor_bot_one_limit/divid_one_low , -motor_bot_one_limit/divid_one_high)                                                             
-                            m_b_2_l2 = motor_bot_two_limit + map_range(self.handPosY, minlimY, maxlimY, motor_bot_two_limit/divid_two_low, -motor_bot_two_limit/divid_two_high)    
+                            m_b_1_l2 = motor_bot_one_limit + map_range(self.handPosY, self.min_lim_y, self.max_lim_y, motor_bot_one_limit/divid_one_low , -motor_bot_one_limit/divid_one_high)                                                             
+                            m_b_2_l2 = motor_bot_two_limit + map_range(self.handPosY, self.min_lim_y, self.max_lim_y, motor_bot_two_limit/divid_two_low, -motor_bot_two_limit/divid_two_high)    
                             
                             #mapping the hand position to the motor range with secondary limits applied 
-                            motor_bot_one_map = map_range(self.handPos, minlim, maxlim, 0, m_b_1_l2) 
-                            motor_bot_two_map = map_range(self.handPos, minlim, maxlim, m_b_2_l2, 0) 
+                            motor_bot_one_map = map_range(self.handPos, self.min_lim_x, self.max_lim_x, 0, m_b_1_l2) 
+                            motor_bot_two_map = map_range(self.handPos, self.min_lim_x, self.max_lim_x, m_b_2_l2, 0) 
                             
                             #making sure motor position does not go past limits
                             motor_bot_one_clamped = clamp_number(motor_bot_one_map, 0, m_b_1_l2)
