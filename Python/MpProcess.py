@@ -7,6 +7,7 @@ from AnimationMethods import AnimationMethods
 from timer import Timer
 import random
 import configparser
+import os
 
 
 addr = 0x8 # bus address
@@ -43,34 +44,60 @@ class MpProcess:
 
     def get_config(self): # gets the data from the config file and stores it in variables
         
-        #creates the parser and opens the file
-        config = configparser.ConfigParser()
-        config.read("/home/rock/Desktop/Tentacle-Sculpture/Python/tentacle_config.ini")
-        
-        #sets all variables in the config
-        self.time_between_anim_awake = config.get('Timers', 'anim_awake') #time between animations when awake
-        self.time_between_anim_sleep = config.get('Timers', 'anim_sleep') #time between animations when sleeping
-        self.upper_segment_delay = config.get('Timers', 'seg_delay')#Delay time of Upper segment movment
-        self.turn_duration = config.get('Timers', 'turn_time')#turn timer
-        self.sleep_time = int(config.get('Timers', 'sleep_time')) # the amount of time it sleeps before it can track again
-        
-        
-        anim_array_left_string = config.get('Anim', 'anim_left')
-        self.anim_array_left =  anim_array_left_string.split(', ')
-        print(self.anim_array_left)
 
-        anim_array_right_string = config.get('Anim', 'anim_right')
-        self.anim_array_right =  anim_array_right_string.split(', ')
-        print(self.anim_array_right)
+        if os.path.exists("Python/tentacle_config.ini"):
 
-        anim_array_idle_string = config.get('Anim', 'anim_idle')
-        self.anim_array_idle =  anim_array_idle_string.split(', ')
-        print(self.anim_array_idle)
+            print("File exists. Setting values...")
 
-        self.move_speed = int(config.get('Speed', 'speed')) # speed of tracking movement
-        self.move_accel = int(config.get('Speed', 'accel')) # acceleration of tracking movement
-        # todo~ #speed changing timer while tracking 
-        
+            #creates the parser and opens the file
+            config = configparser.ConfigParser()
+            config.read("/home/rock/Desktop/Tentacle-Sculpture/Python/tentacle_config.ini")
+            
+            #sets all variables in the config
+            self.time_between_anim_awake = config.get('Timers', 'anim_awake') #time between animations when awake
+            self.time_between_anim_sleep = config.get('Timers', 'anim_sleep') #time between animations when sleeping
+            self.upper_segment_delay = config.get('Timers', 'seg_delay')#Delay time of Upper segment movment
+            self.turn_duration = config.get('Timers', 'turn_time')#turn timer
+            self.sleep_time = int(config.get('Timers', 'sleep_time')) # the amount of time it sleeps before it can track again
+            
+            anim_array_left_string = config.get('Anim', 'anim_left')
+            self.anim_array_left =  anim_array_left_string.split(', ')
+            
+            anim_array_right_string = config.get('Anim', 'anim_right')
+            self.anim_array_right =  anim_array_right_string.split(', ')
+            
+            anim_array_idle_string = config.get('Anim', 'anim_idle')
+            self.anim_array_idle =  anim_array_idle_string.split(', ')
+            
+
+            self.move_speed = int(config.get('Speed', 'speed')) # speed of tracking movement
+            self.move_accel = int(config.get('Speed', 'accel')) # acceleration of tracking movement
+            # todo~ #speed changing timer while tracking 
+
+
+            #Move
+            self.is_opposite = bool(config.get('Move', 'opposite'))
+
+            if bool(config.get('Move', 'opposite')) is True:
+                self.lower_limit = 0
+                self.upper_limit = 180
+            else:
+                self.lower_limit = 180
+                self.upper_limit = 0
+            
+
+        else:
+            print("File does NOT exists. Setting default values...")
+            
+            #Timer Numbers (defaut) - changes if config file is present
+            self.time_between_anim_awake = 50
+            self.time_between_anim_sleep = 30
+            self.upper_segment_delay = 2
+            self.turn_duration = 10
+            self.sleep_time = 15
+            self.move_speed = 70
+            self.move_accel = 50
+
 
     def __init__(self, curPos, frame=None):
         
@@ -86,18 +113,11 @@ class MpProcess:
         self.motionAnimToggle = 0 # toggle for switching in between animation and motion tracking mode for each run
         self.animation = AnimationMethods(addr, bus)
 
-        #variables for configuration
-
-        #Timer Numbers (defaut) - changes if config file is present
-        self.time_between_anim_awake = 50
-        self.time_between_anim_sleep = 30
-        self.upper_segment_delay = 2
-        self.turn_duration = 10
-        self.sleep_time = 15
-        self.move_speed = 70
-        self.move_accel = 50
-        
         self.get_config()
+
+       
+        
+        
         
         '''
         self.animation.run_animation("nine-d")
@@ -264,8 +284,8 @@ class MpProcess:
                             verticle_influence = map_range(self.handPosY, minlimY, maxlimY, 0.9, 0.3)    
                             
                             #motor position of top section from a delayed handPos
-                            motor_top_one_map = map_range(self.delayedPos, minlim, maxlim, 0, 180)
-                            motor_top_two_map = map_range(self.delayedPos, minlim, maxlim, 180, 0) #flipped so motors rotate in twards the center
+                            motor_top_one_map = map_range(self.delayedPos, minlim, maxlim, self.upper_limit, self.lower_limit)
+                            motor_top_two_map = map_range(self.delayedPos, minlim, maxlim, self.lower_limit, self.upper_limit) #flipped so motors rotate in twards the center
                             
                             #clamps the top section motors so they don't over rotate past 180
                             motor_top_one_clamped = clamp_number(motor_top_one_map, 0, 180)
