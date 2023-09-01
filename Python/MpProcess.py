@@ -94,12 +94,19 @@ class MpProcess:
             #Track
             self.cam_size_x = config.getint('Track', 'cam_x')
             self.cam_size_y = config.getint('Track', 'cam_y')
+            
+            if config.getboolean('Track', 'absolute'):
+                self.max_lim_x = config.getint('Track', 'x_upper_lim') + config.getint('Track', 'x_offset')
+                self.min_lim_x = config.getint('Track', 'x_lower_lim') + config.getint('Track', 'x_offset')
 
-            self.max_lim_x = (640 + config.getint('Track', 'x_upper_lim')) + config.getint('Track', 'x_offset')
-            self.min_lim_x = (0 + config.getint('Track', 'x_lower_lim')) + config.getint('Track', 'x_offset')
+                self.max_lim_y = config.getint('Track', 'y_upper_lim') + config.getint('Track', 'y_offset')
+                self.min_lim_y = config.getint('Track', 'y_lower_lim') + config.getint('Track', 'y_offset')
+            else:
+                self.max_lim_x = (self.cam_size_x + config.getint('Track', 'x_upper_lim')) + config.getint('Track', 'x_offset')
+                self.min_lim_x = (0 + config.getint('Track', 'x_lower_lim')) + config.getint('Track', 'x_offset')
 
-            self.max_lim_y = (480 + config.getint('Track', 'y_upper_lim')) + config.getint('Track', 'y_offset')
-            self.min_lim_y = (0 + config.getint('Track', 'y_lower_lim')) + + config.getint('Track', 'y_offset')
+                self.max_lim_y = (self.cam_size_y + config.getint('Track', 'y_upper_lim')) + config.getint('Track', 'y_offset')
+                self.min_lim_y = (0 + config.getint('Track', 'y_lower_lim')) + + config.getint('Track', 'y_offset')
 
 
             #Homing
