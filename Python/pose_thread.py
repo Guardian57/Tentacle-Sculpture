@@ -77,7 +77,7 @@ while True:
                                                             
 
     frame = video_getter.frame
-    frame = cv2.resize(frame, (640, 480))
+    frame = cv2.resize(frame, (video_process.cam_size_x, video_process.cam_size_y))
     #frame = putIterationsPerSec(frame, cps.countsPerSec())
     #cps.increment()
     

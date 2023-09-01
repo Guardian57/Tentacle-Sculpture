@@ -89,6 +89,9 @@ class MpProcess:
                 self.upper_limit = 0
 
             #Track
+            self.cam_size_x = config.getint('Track', 'cam_x')
+            self.cam_size_y = config.getint('Track', 'cam_y')
+
             self.max_lim_x = (640 + config.getint('Track', 'x_upper_lim')) + config.getint('Track', 'x_offset')
             self.min_lim_x = (0 + config.getint('Track', 'x_lower_lim')) + config.getint('Track', 'x_offset')
 
