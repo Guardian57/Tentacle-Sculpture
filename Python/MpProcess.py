@@ -61,7 +61,8 @@ class MpProcess:
             self.upper_segment_delay = config.get('Timers', 'seg_delay')#Delay time of Upper segment movment
             self.turn_duration = config.get('Timers', 'turn_time')#turn timer
             self.sleep_time = int(config.get('Timers', 'sleep_time')) # the amount of time it sleeps before it can track again
-            
+            self.speed_time = config.getint('Timers', 'speed_time')
+
             #Anim
             anim_array_left_string = config.get('Anim', 'anim_left')
             self.anim_array_left =  anim_array_left_string.split(', ')
@@ -75,8 +76,10 @@ class MpProcess:
             #Speed
             self.move_speed = int(config.get('Speed', 'speed')) # speed of tracking movement
             self.move_accel = int(config.get('Speed', 'accel')) # acceleration of tracking movement
-            # todo~ #speed changing timer while tracking 
-
+            
+            self.change_speed = config.getboolean('Speed', 'change_speed')
+            self.new_speed = config.getint('Speed','newSpeed')
+            self.new_accel = config.getint('Speed','newAccel')
 
             #Move
             if config.getboolean('Move', 'opposite') is True:
@@ -182,7 +185,7 @@ class MpProcess:
 #         self.glitch_timer_time = time.perf_counter()
 #         self.glitch_timer_duration = 5
         
-        self.speed_timer = Timer(5)
+        self.speed_timer = Timer(self.speed_time)
         self.speed_toggle = True
     
     def start (self):
@@ -264,7 +267,11 @@ class MpProcess:
                             
                         if self.turn_start:
                             print('reset turn time')
-                            self.speed_timer.start()
+                            
+                            if self.change_speed is True:
+                                self.speed_timer.start()
+
+
                             self.turn_timer.start()
                             self.turn_start = False
                         
@@ -436,18 +443,19 @@ class MpProcess:
                     self.idle_start = True
                     self.tracking_start = True
                 
-                if self.speed_timer.is_done():
-                    
-                    self.speed_toggle = not self.speed_toggle
-                    
-                    if(self.speed_toggle):
-                        print("toogle true")
-                        bus.write_i2c_block_data(addr,0x0A,[70, 100])
-                    else:
-                        print("toogle false")
-                        bus.write_i2c_block_data(addr,0x0A,[10, 20])
-                    
-                    self.speed_timer.start()
+                if self.change_speed is True:
+                    if self.speed_timer.is_done():
+                        
+                        self.speed_toggle = not self.speed_toggle
+                        
+                        if(self.speed_toggle):
+                            print("toogle true")
+                            bus.write_i2c_block_data(addr,0x0A,[self.new_speed, self.new_accel])
+                        else:
+                            print("toogle false")
+                            bus.write_i2c_block_data(addr,0x0A,[self.move_speed, self.move_accel])
+                        
+                        self.speed_timer.start()
     
     def stop(self):
         self.stopped = True 
