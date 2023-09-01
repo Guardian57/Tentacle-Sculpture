@@ -13,9 +13,6 @@ import os
 addr = 0x8 # bus address
 bus = SMBus(7) # indicates /dev/ic2-1
 
-
-
-
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 
@@ -31,9 +28,6 @@ def map_range(val, inMin, inMax, outMin, outMax):
 
 def clamp_number(num, a, b):
     return max(min(num, max(a, b)), min(a, b))
-
-
-    
 
 
 class MpProcess:
@@ -108,33 +102,66 @@ class MpProcess:
                 self.max_lim_y = (self.cam_size_y + config.getint('Track', 'y_upper_lim')) + config.getint('Track', 'y_offset')
                 self.min_lim_y = (0 + config.getint('Track', 'y_lower_lim')) + + config.getint('Track', 'y_offset')
 
-
             #Homing
             self.is_homing = config.getboolean('Homing', '90deg')
 
             #Debug
             self.show_video = config.getboolean('Debug', 'show_video')
 
-            
-
         else:
             print("File does NOT exists. Setting default values...")
             
-            #Timer Numbers (defaut) - changes if config file is present
+            #Default Values
+            #All variables should mirror config file
+            
+            #***DO NOT CHANGE VALUES TO CONFIGURE*** (these are only a base values for when a config file is not found)
+
+            #Timers
             self.time_between_anim_awake = 50
             self.time_between_anim_sleep = 30
             self.upper_segment_delay = 2
-            self.turn_duration = 10
+            self.turn_duration = 75
             self.sleep_time = 15
+            self.speed_time = 10
+
+            #anim
+            self.anim_array_left = ["left", "rel"]
+            self.anim_array_right = ["right", "rel"]
+            self.anim_array_idle = ["idle_twitch", "idle_twitch_2", "idle_twitch_3"] 
+
+            #Speed
             self.move_speed = 70
             self.move_accel = 50
+            self.change_speed = True
+            self.new_speed = 50
+            self.new_accel = 100
+
+            #Move
+            #Below values are if the key "opposite" is set to false in config file
+            self.lower_limit = 180
+            self.upper_limit = 0
+
+            #Track
+            self.cam_size_x = 640
+            self.cam_size_y = 480
+
+            self.max_lim_x = self.cam_size_x - 30
+            self.min_lim_x = 0 + 30
+
+            self.max_lim_y = self.cam_size_y - 30
+            self.min_lim_y = 0 + 30
+
+            #Homing
+            self.is_homing = False
+
+            #Debug
+            self.show_video = False # **HINT** - if you cannot get the tentacle to run the program with button start, make sure this value is false here and in config files
 
 
     def __init__(self, curPos, frame=None):
         
         self.currentPos = curPos
          
-        
         self.frame = frame
         self.image = frame
         self.hand_state = 0
@@ -146,7 +173,6 @@ class MpProcess:
 
         self.get_config()
 
-       
         if self.is_homing: # set this value in the config file
             #sets the motors to 90 deg and holds. **the rest of the program will not run!** for adjusting hall effect sensors
             self.animation.run_animation("nine-d")
@@ -284,9 +310,6 @@ class MpProcess:
                         
                         
                         
-                            
-                        
-                    
                     if self.turn_timer.is_done():
                         self.endOfSession = True
                     
@@ -362,12 +385,6 @@ class MpProcess:
                             motor_bot_two = int(motor_bot_two_clamped)
                        
                         
- 
-                        
- 
- 
- 
- 
                             if cmd_out == False:
     #                             cmd_out = True
     #                             print("cmd started ", format(cmd_out))
@@ -386,13 +403,7 @@ class MpProcess:
                             cmd_out = False
                             #print(self.currentPos)
                         self.currentPos = val_when_enter
-                    
-                    
-                        
-                            
-                            
-                    
-                                       
+                                   
                     #print("try finished")
                   
                 except:
@@ -413,10 +424,6 @@ class MpProcess:
                         
                         print('reset position check')
                         
-                    
-                    
-                
-                
                 
                 if self.anim_timer.is_done():
                     print('playing animation')
