@@ -3,7 +3,7 @@ import time
 class Timer:
     
     def __init__(self, interval):
-        self.interval = interval
+        self.interval = int(interval)
         self.start_time = None
         self.pause_time = None
         
@@ -29,4 +29,4 @@ class Timer:
         self.pause_time = None
 
     def update_interval(self, new_interval):
-        self.interval = new_interval
+        self.interval = int(new_interval)

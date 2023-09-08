@@ -18,7 +18,9 @@ def sig_handler(signum, frame):
 signal.signal(signal.SIGINT, sig_handler)
 signal.signal(signal.SIGTSTP, sig_handler)
 
-show_video = False
+
+
+show_video = True
 process_frames = True
 
 #cap = cv2.VideoCapture(0)
@@ -33,6 +35,8 @@ video_getter = VideoGet(1).start()
 if process_frames:
     
     video_process = MpProcess(start_rot, video_getter.frame).start()
+    video_process.get_config()
+    show_video = video_process.show_video
     
 if show_video:
     
@@ -72,7 +76,7 @@ while True:
                                                             
 
     frame = video_getter.frame
-    frame = cv2.resize(frame, (640, 480))
+    frame = cv2.resize(frame, (video_process.cam_size_x, video_process.cam_size_y))
     #frame = putIterationsPerSec(frame, cps.countsPerSec())
     #cps.increment()
     
