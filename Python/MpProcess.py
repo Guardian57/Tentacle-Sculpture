@@ -125,8 +125,8 @@ class MpProcess:
             self.speed_time = 10
 
             #anim
-            self.anim_array_left = ["left", "rel"]
-            self.anim_array_right = ["right", "rel"]
+            self.anim_array_left = ["left", "wave_small"]
+            self.anim_array_right = ["right", "wave_small"]
             self.anim_array_idle = ["idle_twitch", "idle_twitch_2", "idle_twitch_3"] 
 
             #Speed
@@ -192,7 +192,7 @@ class MpProcess:
         #     pass
         
         #plays animation on startup before doing anything else. "wake up" animation
-        self.animation.run_animation("rel")
+        self.animation.run_animation("wave_small")
         print("yo")
         #timer for playing animation
         self.anim_timer = Timer(self.time_between_anim_awake)

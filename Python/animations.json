@@ -59,7 +59,7 @@
         ]
     },
 
-    "rel" : { 
+    "wave_small" : { 
         "type" : "relative",
         "frames" : [
             
