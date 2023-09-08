@@ -102,6 +102,8 @@ class MpProcess:
                 self.max_lim_y = (self.cam_size_y + config.getint('Track', 'y_upper_lim')) + config.getint('Track', 'y_offset')
                 self.min_lim_y = (0 + config.getint('Track', 'y_lower_lim')) + + config.getint('Track', 'y_offset')
 
+            self.hip_trigger_limit = config.getint('Track', 'hip_offset') + self.cam_size_y
+
             #Homing
             self.is_homing = config.getboolean('Homing', '90deg')
 
@@ -150,6 +152,8 @@ class MpProcess:
 
             self.max_lim_y = self.cam_size_y - 30
             self.min_lim_y = 0 + 30
+
+            self.hip_trigger_limit = self.cam_size_y
 
             #Homing
             self.is_homing = False
@@ -328,7 +332,7 @@ class MpProcess:
                             
                             self.track_timer.start()
 
-                        if (hip[1]*480) < 480:    
+                        if (hip[1]*480) < self.hip_trigger_limit:    
                             #influence over the range of the horizontal influence.
                             #adjusting the influence range with the Y axis moves the motor positions to the respective position within the new range resulting in verticle movement. 
                             #simple way of adding verticle movement
