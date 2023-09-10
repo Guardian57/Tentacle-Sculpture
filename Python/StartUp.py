@@ -91,6 +91,4 @@ while True:
     except IOError:
         print("error")
  
- 
-# LED_GPIO.close()
- 
+# LED_GPIO.close() 
